@@ -1,0 +1,1755 @@
+<!doctype html>
+<!-- 基于 V0.7 基座：首页计划中心 + 账号观点审核 + 发布排期闭环 -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Content Radar 内容雷达 V0.9.3 可编辑黑白低保真 HTML 原型" />
+  <title>Content Radar｜可编辑黑白原型 V0.9.3</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22white%22/><circle cx=%2232%22 cy=%2232%22 r=%2226%22 fill=%22none%22 stroke=%22black%22 stroke-width=%224%22/><text x=%2232%22 y=%2239%22 text-anchor=%22middle%22 font-size=%2220%22 font-family=%22Arial%22 fill=%22black%22>CR</text></svg>" />
+  <style>
+    /* =========================================================
+       EDITABLE TOKENS｜仅使用黑、白、灰，便于后续进入视觉阶段
+       ========================================================= */
+    :root {
+      --ink: #171717;
+      --muted: #666;
+      --subtle: #8a8a8a;
+      --line: #d6d6d6;
+      --line-strong: #a8a8a8;
+      --surface: #fff;
+      --surface-2: #f6f6f4;
+      --surface-3: #ececea;
+      --danger: #2a2a2a;
+      --radius-sm: 7px;
+      --radius-md: 11px;
+      --radius-lg: 15px;
+      --sidebar-width: 248px;
+      --topbar-height: 68px;
+      --content-max: 1440px;
+      --font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--surface-2);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .38; }
+    a { color: inherit; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* =========================================================
+       APP SHELL｜Codex 式克制工作台结构
+       ========================================================= */
+    .app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) 1fr; }
+    .sidebar {
+      position: fixed; inset: 0 auto 0 0; z-index: 20;
+      width: var(--sidebar-width); padding: 18px 14px;
+      background: #f2f2ef; border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 4px 10px; font-weight: 720; font-size: 17px; }
+    .brand-mark {
+      width: 27px; height: 27px; border: 1.5px solid var(--ink); border-radius: 50%;
+      display: grid; place-items: center; font-size: 12px; font-weight: 800;
+    }
+    .workspace-label { padding: 0 10px; color: var(--subtle); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .nav-list { display: grid; gap: 4px; }
+    .nav-item {
+      width: 100%; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm);
+      padding: 10px 11px; display: flex; align-items: center; gap: 11px; text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.66); border-color: var(--line); }
+    .nav-item.active { background: var(--surface); border-color: var(--line-strong); }
+    .nav-icon { width: 21px; text-align: center; font-size: 15px; }
+    .nav-count { margin-left: auto; min-width: 23px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 11px; text-align: center; }
+    .sidebar-footer { margin-top: auto; display: grid; gap: 6px; }
+    .profile-card { display: flex; align-items: center; gap: 9px; padding: 10px; border-top: 1px solid var(--line); }
+    .avatar { width: 30px; height: 30px; border: 1px solid var(--line-strong); border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+    .profile-meta strong, .profile-meta span { display: block; }
+    .profile-meta span { color: var(--muted); font-size: 11px; }
+
+    .main-shell { grid-column: 2; min-width: 0; }
+    .topbar {
+      position: sticky; top: 0; z-index: 15; height: var(--topbar-height);
+      padding: 0 28px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    }
+    .page-heading h1 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+    .page-heading p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 12px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+    .content { max-width: var(--content-max); margin: 0 auto; padding: 22px 28px 90px; }
+    .page { display: none; animation: page-in .16s ease-out; }
+    .page.active { display: block; }
+    @keyframes page-in { from { opacity: .5; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+    /* =========================================================
+       COMMON COMPONENTS
+       ========================================================= */
+    .btn {
+      min-height: 36px; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+      background: var(--surface); display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn:hover { border-color: var(--ink); }
+    .btn.primary { color: #fff; background: var(--ink); border-color: var(--ink); }
+    .btn.ghost { background: transparent; border-color: transparent; }
+    .btn.small { min-height: 30px; padding: 4px 9px; font-size: 12px; }
+    .btn.danger { border-style: dashed; }
+    .btn.loading::before { content: ""; width: 12px; height: 12px; border: 1.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .panel-header { min-height: 52px; padding: 13px 15px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-header h2, .panel-header h3 { margin: 0; font-size: 14px; }
+    .panel-header p { margin: 1px 0 0; color: var(--muted); font-size: 11px; }
+    .panel-body { padding: 14px; }
+    .section-heading { margin: 0 0 14px; display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+    .section-heading h2 { margin: 0; font-size: 18px; }
+    .section-heading p { margin: 3px 0 0; color: var(--muted); }
+    .section-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .chip { display: inline-flex; align-items: center; gap: 5px; min-height: 23px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 11px; white-space: nowrap; }
+    .chip.strong { border-color: var(--ink); }
+    .chip.fill { background: var(--surface-3); }
+    .chip.risk-high { border: 1.5px double var(--ink); font-weight: 700; }
+    .chip.risk-medium { border-style: dashed; }
+    .muted { color: var(--muted); }
+    .subtle { color: var(--subtle); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+    .empty-state { padding: 40px 18px; border: 1px dashed var(--line-strong); border-radius: var(--radius-md); text-align: center; }
+    .empty-state strong, .empty-state span { display: block; }
+    .empty-state span { margin-top: 4px; color: var(--muted); }
+    .divider { height: 1px; background: var(--line); }
+
+    /* =========================================================
+       DASHBOARD
+       ========================================================= */
+    .mode-banner {
+      margin-bottom: 14px; padding: 10px 12px; background: var(--surface-3); border: 1px solid var(--line);
+      border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .mode-banner strong { font-size: 12px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .metric-card { padding: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; }
+    .metric-icon { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); }
+    .metric-value { font-size: 22px; font-weight: 730; line-height: 1; }
+    .metric-label { margin-top: 5px; color: var(--muted); font-size: 12px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .85fr); gap: 12px; align-items: stretch; }
+    .stack { display: grid; gap: 12px; }
+    .dashboard-grid > .panel, .dashboard-grid > .stack, .dashboard-grid > .stack > .panel { height: 100%; min-height: 0; }
+    .hotspot-list { display: grid; gap: 9px; }
+    .hotspot-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .hotspot-row.is-deprioritized { opacity: .58; }
+    .score { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 8px; font-weight: 740; font-size: 17px; }
+    .hotspot-copy h3 { margin: 0; font-size: 13px; }
+    .hotspot-copy p { margin: 3px 0 8px; color: var(--muted); font-size: 12px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+    .insight-card { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+    .insight-card + .insight-card { margin-top: 8px; }
+    .insight-icon { width: 30px; height: 30px; border: 1px solid var(--line-strong); border-radius: 50%; display: grid; place-items: center; }
+    .insight-card h3 { margin: 0 0 4px; font-size: 12px; }
+    .placeholder-lines { display: grid; gap: 5px; }
+    .placeholder-lines i { display: block; height: 5px; background: var(--surface-3); border-radius: 999px; }
+    .placeholder-lines i:nth-child(2) { width: 78%; }
+    .memory-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .memory-cell { min-height: 78px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .memory-cell strong { display: block; margin-top: 4px; font-size: 17px; }
+
+    /* =========================================================
+       TABLES & LIST PAGES
+       ========================================================= */
+    .toolbar { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .field, .select {
+      min-height: 36px; padding: 7px 10px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); outline: none;
+    }
+    .field:focus, .select:focus, textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 2px #e2e2e2; }
+    .search-field { width: min(320px, 100%); }
+    .data-table-wrap { overflow: auto; }
+    .data-table { width: 100%; min-width: 860px; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    .data-table th { background: var(--surface-2); color: var(--muted); font-size: 11px; font-weight: 650; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .title-cell { min-width: 280px; }
+    .title-cell strong { display: block; }
+    .title-cell span { display: block; color: var(--muted); font-size: 11px; }
+    .risk-bar { width: 78px; height: 7px; background: var(--surface-3); border: 1px solid var(--line); }
+    .risk-bar span { display: block; height: 100%; background: var(--ink); }
+
+    /* =========================================================
+       ACCOUNT INSIGHTS
+       ========================================================= */
+    .account-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; margin-bottom: 12px; }
+    .account-card { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+    .account-top { display: flex; align-items: center; gap: 9px; }
+    .account-card h3 { margin: 0; font-size: 13px; }
+    .account-card p { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+    .insight-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .insight-column { padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .insight-column h3 { margin: 0 0 12px; font-size: 14px; }
+    .numbered-list { margin: 0; padding: 0; list-style: none; counter-reset: item; display: grid; gap: 9px; }
+    .numbered-list li { counter-increment: item; display: grid; grid-template-columns: 24px 1fr; gap: 8px; color: var(--muted); }
+    .numbered-list li::before { content: counter(item); width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--ink); font-size: 11px; }
+    .direction-list { display: grid; gap: 8px; }
+    .direction-row { padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
+    .direction-row h4 { margin: 0; font-size: 13px; }
+    .direction-row p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .iteration-stack { display: grid; gap: 16px; min-width: 0; }
+    .iteration-block { min-width: 0; }
+    .iteration-block h3 { margin: 0 0 9px; font-size: 13px; }
+    .iteration-block .data-table-wrap { max-width: 100%; }
+    .learning-timeline { display: grid; gap: 0; padding-left: 6px; }
+    .timeline-item { position: relative; display: grid; grid-template-columns: 90px minmax(0,1fr); gap: 12px; padding: 0 0 14px 18px; border-left: 1px solid var(--line-strong); }
+    .timeline-item::before { content: ""; position: absolute; left: -5px; top: 4px; width: 9px; height: 9px; border: 1px solid var(--ink); border-radius: 50%; background: var(--surface); }
+    .timeline-item:last-child { padding-bottom: 0; border-left-color: transparent; }
+    .timeline-time { color: var(--muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .timeline-copy { display: flex; align-items: flex-start; gap: 7px; flex-wrap: wrap; }
+    .timeline-copy p { margin: 1px 0 0; color: var(--muted); font-size: 11px; }
+
+    /* =========================================================
+       V0.6 MULTI-SOURCE & PRODUCT EXPLANATION
+       ========================================================= */
+    .rule-note { margin: 0 0 12px; padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 12px; }
+    .rule-note strong { color: var(--ink); }
+    .about-stack { display: grid; gap: 12px; min-width: 0; }
+    .about-stack > *, .about-grid > * { min-width: 0; }
+    .about-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+    .about-list { margin: 0; padding-left: 19px; color: var(--muted); display: grid; gap: 7px; }
+    .workflow-flow { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(9, minmax(108px, 1fr)); gap: 7px; overflow-x: auto; padding-bottom: 4px; }
+    .workflow-step { position: relative; min-height: 92px; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+    .workflow-step:not(:last-child)::after { content: "→"; position: absolute; right: -8px; top: 36px; z-index: 1; padding: 0 2px; background: var(--surface); }
+    .workflow-step span { display: block; margin-bottom: 4px; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .workflow-step strong { font-size: 12px; }
+    .workflow-step p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .profile-dimensions { display: grid; gap: 5px; }
+    .profile-dimensions p { margin: 0; }
+    .similarity-demo { margin-top: 10px; padding: 11px; border: 1.5px double var(--ink); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .similarity-demo p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .candidate-summary { margin-top: 5px !important; color: var(--ink) !important; }
+    .candidate-hook { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+    /* =========================================================
+       V0.7 DASHBOARD CALENDAR & EDITABLE WEEK PLAN
+       ========================================================= */
+    .dashboard-bottom-strip { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .dashboard-insight { width: 100%; text-align: left; background: var(--surface); cursor: pointer; }
+    .dashboard-insight:hover { border-color: var(--ink); background: var(--surface-2); }
+    .dashboard-insight p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .calendar-panel { position: relative; overflow: hidden; }
+    .calendar-panel .panel-header { align-items: flex-start; }
+    .calendar-body { position: relative; padding: 10px; overflow-x: auto; touch-action: pan-y; user-select: none; cursor: grab; }
+    .calendar-body.dragging { cursor: grabbing; }
+    .calendar-month-shell { min-width: 490px; }
+    .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .calendar-weekdays { margin-bottom: 4px; color: var(--muted); font-size: 10px; text-align: center; }
+    .calendar-day { min-height: 66px; padding: 5px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+    .calendar-day.empty { border-color: transparent; background: transparent; }
+    .calendar-day.has-event { cursor: pointer; }
+    .calendar-day.has-event:hover { border-color: var(--ink); }
+    .calendar-day.is-today { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .calendar-day-number { display: block; margin-bottom: 3px; font-size: 10px; font-weight: 700; }
+    .calendar-event { width: 100%; margin-top: 3px; padding: 3px 4px; border-radius: 3px; font-size: 9px; line-height: 1.25; text-align: left; overflow: hidden; text-overflow: ellipsis; border: 1px solid var(--line-strong); background: #f8f8f7; }
+    .calendar-event.us-macro { border: 1.5px solid #777; background: #f0f0ee; }
+    .calendar-event.cn-macro { border: 1px dashed #777; background: #fff; }
+    .calendar-event.securities { border: 1px solid #aaa; background: #f8f8f7; }
+    .calendar-event.derivatives { border: 1px dotted #555; background: #fff; }
+    .calendar-day.is-today .calendar-event { color: var(--ink); background: #fff; border-color: #fff; }
+    .calendar-arrow { position: absolute; z-index: 3; top: 52%; width: 30px; height: 44px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.92); opacity: 0; transition: opacity .16s ease; }
+    .calendar-arrow.prev { left: 4px; }
+    .calendar-arrow.next { right: 4px; }
+    .calendar-panel:hover .calendar-arrow { opacity: .45; }
+    .calendar-panel .calendar-arrow:hover { opacity: .85; }
+    .calendar-legend { padding: 0 10px 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .calendar-legend .chip.us-macro { border: 1.5px solid #777; background: #f0f0ee; }
+    .calendar-legend .chip.cn-macro { border: 1px dashed #777; }
+    .calendar-legend .chip.securities { background: #f8f8f7; }
+    .calendar-legend .chip.derivatives { border-style: dotted; }
+    .week-plan-wrap { max-height: 560px; overflow: auto; cursor: grab; touch-action: pan-x pan-y; }
+    .week-plan-wrap.dragging { cursor: grabbing; user-select: none; }
+    .week-plan-table { min-width: 1580px; }
+    .week-plan-table th { position: sticky; top: 0; z-index: 2; }
+    .week-plan-table th:first-child, .week-plan-table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); min-width: 120px; }
+    .week-plan-table th:first-child { z-index: 3; background: var(--surface-2); }
+    .week-plan-table td { min-width: 190px; vertical-align: top; }
+    .week-plan-table td:last-child, .week-plan-table th:last-child { min-width: 76px; }
+    .plan-project { min-height: 28px; padding: 5px 6px; border: 1px dashed transparent; font-weight: 700; }
+    .plan-editor { min-height: 58px; padding: 6px; border: 1px dashed var(--line); border-radius: 4px; outline: none; white-space: pre-wrap; }
+    .plan-editor:focus { border-color: var(--ink); background: var(--surface-2); }
+    .plan-type { width: 100%; margin-top: 5px; min-height: 27px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); font-size: 10px; }
+    .plan-type.type-geopolitics { color: #8b4f4f; border-color: #8a8a8a; }
+    .plan-type.type-negative { color: #8a6848; border-color: #8a8a8a; }
+    .plan-type.type-positive { color: #5d7a67; border-color: #8a8a8a; }
+    .plan-type.type-macro { color: #5d7188; border-color: #8a8a8a; }
+    .plan-type.type-industry { color: #746481; border-color: #8a8a8a; }
+    .plan-footer { padding: 12px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .plan-footer p { margin: 0; color: var(--muted); font-size: 11px; }
+    .home-plan-panel { margin: 14px 0; border-color: var(--line-strong); }
+    .dashboard-lower-grid { margin-top: 12px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); gap: 12px; }
+    .account-insight-combined { width: 100%; padding: 0; text-align: left; overflow: hidden; background: var(--surface); cursor: pointer; }
+    .dashboard-account-wide { display: block; margin-top: 12px; }
+    .account-insight-combined:hover { border-color: var(--ink); background: var(--surface-2); }
+    .account-combined-header { padding: 13px 15px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .account-combined-header strong { display: block; }
+    .account-combined-header span { color: var(--muted); font-size: 11px; }
+    .account-combined-grid { padding: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .account-combined-item { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .account-combined-item strong { font-size: 12px; }
+    .account-combined-item p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .week-plan-table tr.account-viewpoint-row td { background: var(--surface-3); }
+    .plan-cell-meta { margin-top: 5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .account-badge { width: 23px; height: 23px; border: 1px solid var(--ink); border-radius: 50%; display: inline-grid; place-items: center; background: var(--surface); font-size: 9px; font-weight: 750; }
+    .plan-confirmed { color: #fff; background: var(--ink); border-color: var(--ink); }
+    .schedule-info { margin-top: 7px; padding: 7px 9px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--muted); font-size: 11px; }
+    .schedule-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .schedule-option { padding: 9px; border: 1px solid var(--line); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 7px; }
+    .tweet-preview { padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-2); }
+    .tweet-preview p { margin: 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .tweet-preview footer { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
+    .source-link-line { margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 11px; overflow-wrap: anywhere; }
+
+    @media (max-width: 1200px) and (min-width: 900px) {
+      .dashboard-bottom-strip { gap: 8px; }
+      .dashboard-insight { padding: 9px; }
+    }
+    @media (max-width: 899px) {
+      .dashboard-bottom-strip { grid-template-columns: 1fr; }
+      .dashboard-lower-grid, .account-combined-grid { grid-template-columns: 1fr; }
+    }
+
+    /* =========================================================
+       REVIEW QUEUE
+       ========================================================= */
+    .tabs { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+    .tab { border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+    .tab.active { background: var(--surface); border-color: var(--line-strong); }
+    .review-list { display: grid; gap: 10px; }
+    .review-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+    .review-main { padding: 13px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 11px; align-items: start; }
+    .check { width: 18px; height: 18px; accent-color: var(--ink); }
+    .review-title { margin: 0 0 6px; font-size: 14px; }
+    .review-meta { display: flex; flex-wrap: wrap; gap: 5px; }
+    .review-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+    .review-evidence { padding: 10px 13px; background: var(--surface-2); border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .review-card[data-status="confirmed"] { opacity: .82; }
+    .review-card[data-status="rejected"] { opacity: .48; border-style: dashed; }
+
+    /* =========================================================
+       TASKS, MEMORY, SETTINGS
+       ========================================================= */
+    .task-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .task-card { padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .task-card h3 { margin: 0 0 9px; font-size: 13px; }
+    .task-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .task-card p { margin: 9px 0 0; color: var(--muted); font-size: 11px; }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid { display: grid; gap: 13px; }
+    .form-row { display: grid; gap: 6px; }
+    .form-row label { font-size: 12px; font-weight: 650; }
+    .form-row small { color: var(--muted); }
+    .form-row textarea { min-height: 94px; resize: vertical; padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+    .check-row { display: flex; align-items: center; gap: 8px; }
+
+    /* =========================================================
+       MODAL & TOAST
+       ========================================================= */
+    .modal-backdrop { position: fixed; inset: 0; z-index: 60; padding: 18px; background: rgba(0,0,0,.34); display: none; place-items: center; }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(650px, 100%); max-height: min(760px, calc(100vh - 36px)); overflow: auto; background: var(--surface); border: 1px solid var(--ink); border-radius: var(--radius-lg); }
+    .modal-header { position: sticky; top: 0; z-index: 2; padding: 14px 16px; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .modal-header h2 { margin: 0; font-size: 16px; }
+    .modal-body { padding: 16px; }
+    .modal-footer { position: sticky; bottom: 0; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+    .icon-btn { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--surface); border-radius: 7px; display: grid; place-items: center; }
+    .evidence-list { display: grid; gap: 9px; }
+    .evidence-item { padding: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .evidence-item strong { display: block; }
+    .evidence-item a { display: inline-block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 90; max-width: 360px; padding: 11px 13px; color: #fff; background: var(--ink); border: 1px solid var(--ink); border-radius: var(--radius-sm); transform: translateY(18px); opacity: 0; pointer-events: none; transition: .2s ease; }
+    .toast.show { transform: none; opacity: 1; }
+
+    /* =========================================================
+       MOBILE NAV & RESPONSIVE
+       ========================================================= */
+    .mobile-nav { display: none; }
+    @media (max-width: 1100px) {
+      :root { --sidebar-width: 210px; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .account-strip { grid-template-columns: repeat(2, 1fr); }
+      .task-grid { grid-template-columns: repeat(2, 1fr); }
+      .review-main { grid-template-columns: 22px minmax(0,1fr); }
+      .review-actions { grid-column: 2; justify-content: flex-start; }
+    }
+    @media (max-width: 767px) {
+      :root { --topbar-height: 58px; }
+      body { background: var(--surface); }
+      .app-shell { display: block; }
+      .sidebar { display: none; }
+      .main-shell { grid-column: auto; }
+      .topbar { height: auto; min-height: var(--topbar-height); padding: 9px 14px; align-items: flex-start; }
+      .page-heading h1 { font-size: 17px; }
+      .page-heading p { font-size: 10px; }
+      .top-actions .status-pill { display: none; }
+      .top-actions .btn { min-height: 32px; padding: 5px 9px; font-size: 11px; }
+      .content { padding: 12px 12px 92px; }
+      .mode-banner { align-items: flex-start; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .metric-card { grid-template-columns: 30px 1fr; padding: 10px; gap: 7px; }
+      .metric-icon { width: 30px; height: 30px; }
+      .metric-value { font-size: 18px; }
+      .metric-label { font-size: 10px; }
+      .hotspot-row { grid-template-columns: 42px 1fr; }
+      .score { width: 40px; height: 40px; }
+      .row-actions { grid-column: 1 / -1; justify-content: stretch; }
+      .row-actions .btn { flex: 1; }
+      .memory-mini, .task-grid, .settings-grid, .insight-columns { grid-template-columns: 1fr; }
+      .account-strip { display: flex; overflow: auto; scroll-snap-type: x mandatory; }
+      .account-card { min-width: 210px; scroll-snap-align: start; }
+      .toolbar { align-items: stretch; }
+      .filters, .search-field { width: 100%; }
+      .filters .field, .filters .select { flex: 1; min-width: 0; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .review-main { grid-template-columns: 1fr; }
+      .review-main .check { display: none; }
+      .review-actions { grid-column: auto; justify-content: stretch; }
+      .review-actions .btn { flex: 1; }
+      .review-evidence { align-items: flex-start; flex-direction: column; }
+      .timeline-item { grid-template-columns: 1fr; gap: 4px; }
+      .about-grid { grid-template-columns: 1fr; }
+      .similarity-demo { align-items: flex-start; flex-direction: column; }
+      .mobile-nav {
+        position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: 66px;
+        display: grid; grid-template-columns: repeat(5, 1fr); background: rgba(255,255,255,.96); border-top: 1px solid var(--line);
+      }
+      .mobile-nav button { border: 0; background: transparent; display: grid; place-items: center; align-content: center; gap: 2px; font-size: 10px; }
+      .mobile-nav button span:first-child { font-size: 17px; }
+      .mobile-nav button.active { font-weight: 750; background: var(--surface-2); }
+      .toast { left: 12px; right: 12px; bottom: 78px; max-width: none; }
+    }
+
+    /* ===== 任务记忆与优化：左右两栏 ===== */
+    .memory-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      margin-top: 12px;
+      width: 100%;
+      min-width: 0;
+    }
+    .memory-split-left,
+    .memory-split-right {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+    }
+    .memory-split-left > .panel-body,
+    .memory-split-right > .panel-body {
+      flex: 1;
+      min-height: 0;
+    }
+    .memory-split-left .iteration-stack { grid-template-columns: minmax(0, 1fr); }
+    .memory-split-left .iteration-block,
+    .memory-split-left .data-table-wrap { width: 100%; max-width: 100%; min-width: 0; }
+    .memory-split-left .recovery-config {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      min-width: 0;
+    }
+    .memory-split-left .recovery-config summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 12px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 12px;
+    }
+    .memory-split-left .recovery-config summary::-webkit-details-marker { display: none; }
+    .memory-split-left .recovery-config summary::after { content: "＋"; font-size: 16px; line-height: 1; }
+    .memory-split-left .recovery-config[open] summary::after { content: "－"; }
+    .memory-split-left .recovery-config-body { padding: 0 12px 12px; }
+    .memory-scroll {
+      max-height: 720px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0;
+      border-top: 1px solid var(--line);
+    }
+    .memory-scroll table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .memory-scroll thead {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 2;
+      box-shadow: 0 1px 0 var(--line);
+    }
+    .memory-scroll th,
+    .memory-scroll td {
+      padding: 10px 9px;
+      font-size: 11px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+    .memory-table tbody tr:not(.memory-row-empty) td { height: 44px; }
+    .memory-row-empty td {
+      height: 44px;
+      color: transparent;
+      user-select: none;
+      background: var(--surface);
+    }
+    .memory-scroll::-webkit-scrollbar { width: 8px; }
+    .memory-scroll::-webkit-scrollbar-track { background: var(--line); }
+    .memory-scroll::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
+    @media (min-width: 1101px) {
+      .memory-split-left .iteration-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .memory-split-left [data-human-feedback-panel],
+      .memory-split-left .iteration-stack > p { grid-column: 1 / -1; }
+      .memory-split-left .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .memory-split-left .metric-card { grid-template-columns: 30px 1fr; padding: 9px; gap: 7px; }
+      .memory-split-left .metric-icon { width: 30px; height: 30px; }
+      .memory-split-left .data-table th,
+      .memory-split-left .data-table td { padding: 8px 9px; font-size: 11px; }
+      .memory-split-left .panel-header { padding: 12px; }
+      .memory-split-left .panel-body { padding: 12px; }
+    }
+    @media (max-width: 1100px) {
+      .memory-split { grid-template-columns: 1fr; }
+      .memory-scroll { max-height: 480px; }
+    }
+
+    /* ===== V0.9.3：策略迭代纵向区块与高保真预览 ===== */
+    .memory-split-left .iteration-stack > .rules-block,
+    .memory-split-left .iteration-stack > .recovery-config { grid-column: 1 / -1; }
+    .memory-split-left .recovery-config-body,
+    .memory-split-left .recovery-config-body .about-grid,
+    .memory-split-left .recovery-config-body .panel,
+    .memory-split-left .recovery-config-body .form-row { min-width: 0; }
+    .memory-split-left .recovery-config-body .field {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    .hifi-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .hifi-preview-card { min-width: 0; overflow: hidden; }
+    .hifi-preview-frame {
+      display: block;
+      padding: 10px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--line);
+    }
+    .hifi-preview-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+    }
+    .hifi-preview-note { margin: 0; padding: 11px 12px; border-top: 1px solid var(--line); }
+    @media (max-width: 1100px) {
+      .hifi-preview-grid { grid-template-columns: 1fr; }
+      .memory-split-left .recovery-config-body .about-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- EDITABLE SECTION: Desktop sidebar -->
+    <aside class="sidebar" aria-label="主导航">
+      <div class="brand"><span class="brand-mark">CR</span><span>Content Radar</span></div>
+      <div>
+        <div class="workspace-label">运营工作台</div>
+        <nav class="nav-list" aria-label="页面导航">
+          <button class="nav-item active" data-page-target="dashboard"><span class="nav-icon">⌂</span><span>今日工作台</span></button>
+          <button class="nav-item" data-page-target="hotspots"><span class="nav-icon">♨</span><span>每日热点</span><span class="nav-count">8</span></button>
+          <button class="nav-item" data-page-target="accounts"><span class="nav-icon">◎</span><span>对标账号观点</span><span class="nav-count">5</span></button>
+          <button class="nav-item" data-page-target="reviews"><span class="nav-icon">☷</span><span>审核清单</span><span class="nav-count review-count">4</span></button>
+          <button class="nav-item" data-page-target="memory"><span class="nav-icon">◫</span><span>任务记忆与优化</span></button>
+          <button class="nav-item" data-page-target="settings"><span class="nav-icon">⚙</span><span>系统设置</span></button>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <button class="nav-item" data-page-target="about"><span class="nav-icon">ⓘ</span><span>产品说明</span></button>
+        <button class="nav-item" data-action="help"><span class="nav-icon">?</span><span>原型说明</span></button>
+        <button class="nav-item" data-page-target="highfidelity"><span class="nav-icon">▧</span><span>高保真预览</span></button>
+        <div class="profile-card"><span class="avatar">陈</span><div class="profile-meta"><strong>内容运营</strong><span>演示工作区</span></div></div>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <div class="page-heading"><h1 id="page-title">今日工作台</h1><p id="page-subtitle">最近更新 13:00 · 真实数据 + 演示数据</p></div>
+        <div class="top-actions">
+          <span class="status-pill"><span class="status-dot"></span><span id="task-status">真实数据已更新</span></span>
+          <button class="btn" data-action="refresh">↻ 更新热点</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <!-- =====================================================
+             PAGE 1: 今日工作台
+             ===================================================== -->
+        <section class="page active" data-page="dashboard">
+          <div class="mode-banner">
+            <div><strong>当前为真实数据优先模式</strong><div class="muted">8 条真实热点 + 93 条对标推文快照；候选仍需人工审核，页面不会自动发布任何内容。</div></div>
+            <button class="btn small" data-action="switch-mode">切换为演示数据</button>
+          </div>
+
+          <div class="metrics-grid" aria-label="今日概览">
+            <article class="metric-card"><div class="metric-icon">♨</div><div><div class="metric-value">8</div><div class="metric-label">市场热点</div></div></article>
+            <article class="metric-card"><div class="metric-icon">◎</div><div><div class="metric-value">5</div><div class="metric-label">对标账号</div></div></article>
+            <article class="metric-card"><div class="metric-icon">☷</div><div><div class="metric-value review-count">4</div><div class="metric-label">待审核候选</div></div></article>
+            <article class="metric-card"><div class="metric-icon">!</div><div><div class="metric-value">1</div><div class="metric-label">高风险候选</div></div></article>
+          </div>
+
+          <section class="panel home-plan-panel" data-week-plan-panel data-dashboard-plan><div class="panel-header"><div><h2>7 天内容计划表</h2><p>点击主题直接编辑；类型可切换；未提供真实链接的默认内容统一标记为演示数据。</p></div><button class="btn small" data-action="today-plan">今日发布计划（8.20）</button></div>
+            <div class="week-plan-wrap"><table class="data-table week-plan-table" data-weekly-plan><thead><tr><th>项目</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th><th>操作</th></tr></thead><tbody class="week-plan-body"></tbody></table></div>
+            <div class="plan-footer"><p>首页与账号页共用同一份计划数据；支持横向 / 纵向拖拽滚动。</p><button class="btn" data-action="add-plan-row">＋ 新增发布内容</button></div>
+            <div class="panel-body"><div class="similarity-demo" data-high-similarity><div><strong>发布前相似度关卡：示例 0.81</strong><p>高风险候选必须人工改写，确认内容排期后仍需在真实 X 后台人工发布。</p></div><button class="btn danger" data-action="rewrite-similarity">需人工改写</button></div></div>
+          </section>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><div><h2>今日优先发布</h2><p>综合每日热点与对标账号观点，按发布优先级排序</p></div><span class="chip strong">Top 3</span></div>
+              <div class="panel-body hotspot-list" id="today-priority-list" aria-live="polite"></div>
+            </section>
+
+            <div class="stack">
+              <section class="panel calendar-panel" data-calendar-panel>
+                <div class="panel-header"><div><h2 id="calendar-title">2026年8月 · 美国/中国核心数据</h2><p>点击事件查看北京时间、说明与公开来源</p></div><span class="chip strong">3 个月演示 · 真实公开日程</span></div>
+                <button class="calendar-arrow prev" data-action="calendar-prev" aria-label="上一个月">‹</button>
+                <button class="calendar-arrow next" data-action="calendar-next" aria-label="下一个月">›</button>
+                <div class="calendar-body" id="calendar-drag-area">
+                  <div class="calendar-month-shell"><div class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="calendar-grid" id="calendar-grid" aria-live="polite"></div></div>
+                </div>
+                <div class="calendar-legend"><span class="chip us-macro">美国宏观 / 美联储</span><span class="chip cn-macro">中国宏观 / 央行</span><span class="chip securities">证券 / 保险 / 财报</span><span class="chip derivatives">期货 / 期权 / 衍生品</span></div>
+              </section>
+            </div>
+          </div>
+
+          <button class="panel account-insight-combined dashboard-account-wide" data-page-target="accounts" aria-label="打开对标账号观点完整报告"><span class="account-combined-header"><span><strong>对标账号观点</strong><span>基于 5 个账号、93 条真实推文快照 · 含策略迭代闭环</span></span><strong>完整报告 →</strong></span><span class="account-combined-grid"><span class="account-combined-item"><strong>可借鉴规律</strong><p>数字冲击 + 反常识结论<br />开放提问结尾提升评论率</p></span><span class="account-combined-item"><strong>不可照搬</strong><p>机构权威陈述不套个人号<br />避免直接引用英文原文结构</p></span><span class="account-combined-item"><strong>差异化方向</strong><p>金融叙事转 Token 计费 / 路由<br />把规范转成上线验收清单</p></span></span></button>
+
+          <div class="dashboard-lower-grid">
+            <section class="panel">
+              <div class="panel-header"><div><h2>待审核候选</h2><p>证据、查重和风险状态全部完成后才可人工确认</p></div><button class="btn ghost small" data-page-target="reviews">打开审核清单 →</button></div>
+              <div class="panel-body review-list" id="dashboard-review-preview">
+                <article class="review-card" data-status="pending" data-risk="low"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">Stripe 收购 OpenRouter：支付与 AI 基础设施的边界正在消失</h3><div class="review-meta"><span class="chip">每日热点</span><span class="chip">真实数据</span><span class="chip">查重完成</span><span class="chip">低风险</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm">确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div></article>
+                <article class="review-card" data-status="pending" data-risk="high"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">这个 AI 产品一定能帮你获得稳定收益</h3><div class="review-meta"><span class="chip">账号观点</span><span class="chip">演示数据</span><span class="chip">查重完成</span><span class="chip risk-high">高风险 · 收益承诺</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="高风险候选">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm" disabled>确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div></article>
+              </div>
+            </section>
+            <section class="panel"><div class="panel-header"><div><h2>任务与记忆</h2><p>轻量定时任务、近 30 天审核记录与策略复盘</p></div><button class="btn ghost small" data-page-target="memory">查看详情 →</button></div><div class="panel-body memory-mini"><div class="memory-cell"><span class="muted">今日任务</span><strong>2 / 2</strong></div><div class="memory-cell"><span class="muted">记忆主题</span><strong>36</strong></div><div class="memory-cell"><span class="muted">相似提醒</span><strong>1</strong></div></div></section>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             PAGE 2: 每日热点
+             ===================================================== -->
+        <section class="page" data-page="hotspots">
+          <div class="section-heading"><div><h2>每日热点 Agent</h2><p>回答“今天值得写什么”，每条事件均保留公开来源和评分依据。</p></div><div class="section-actions"><button class="btn" data-action="import">＋ 导入 URL / CSV</button><button class="btn primary" data-action="refresh">↻ 同步公开数据</button></div></div>
+          <p class="source-note">真实数据 8 条 · 来源：新浪财经 / 华尔街见闻 / 东方财富 / 腾讯新闻 · 更新于 2026-08-20 15:00</p>
+          <p class="rule-note"><strong>去重规则：</strong>主体 + 事件类型 + 24h 时间窗指纹，跨源相似度 ≥ 0.70 合并。　<strong>优先级公式：</strong>时效 30% + 影响 25% + 定位相关性 30% + 传播潜力 15%。</p>
+          <div class="toolbar"><div class="filters"><input class="field search-field" id="hotspot-search" placeholder="搜索事件、标签或来源" /><select class="select" id="topic-filter"><option value="all">全部主题</option><option>支付</option><option>AI Agent</option><option>监管科技</option><option>地缘政治</option><option>突发利空</option><option>利好事件</option><option>宏观数据</option><option>行业热点</option></select><select class="select"><option>按综合分排序</option><option>按发布时间排序</option><option>按来源数量排序</option></select></div><div class="chip-row"><span class="chip strong">Top 8</span><span class="chip">24 小时时间窗</span></div></div>
+          <section class="panel data-table-wrap">
+            <table class="data-table" id="hotspot-table">
+              <thead><tr><th>综合分</th><th>热点事件</th><th>证据</th><th>新颖度</th><th>风险 / 跟进建议</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr data-search="Stripe OpenRouter 支付 AI Agent 金融科技"><td><strong>94</strong></td><td class="title-cell"><strong>Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型</strong><span>11:22 · 支付 / AI Agent / 金融科技</span><span>推荐角度：支付公司为何进入 AI 模型路由与计费层</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:92%"></span></div></td><td><span class="chip">低风险 · ✅ 跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型">证据</button><button class="btn primary small" data-action="generate" data-topic="Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型">生成候选</button></div></td></tr>
+                <tr data-search="AI Agent 可信规范 监管科技 即时零售 新浪财经"><td><strong>91</strong></td><td class="title-cell"><strong>中国信通院联合淘宝闪购发布首份即时零售智能体可信规范</strong><span>12:11 · AI Agent / 监管科技 / 即时零售</span><span>推荐角度：把可信规范转为 Agent 上线验收清单</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:95%"></span></div></td><td><span class="chip">低风险 · ✅ 跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="中国信通院联合淘宝闪购发布首份即时零售智能体可信规范">证据</button><button class="btn primary small" data-action="generate" data-topic="中国信通院联合淘宝闪购发布首份即时零售智能体可信规范">生成候选</button></div></td></tr>
+                <tr data-search="美联储 会议纪要 AI 借贷风险 银行 监管 东方财富"><td><strong>87</strong></td><td class="title-cell"><strong>美联储会议纪要警告 AI 借贷风险向信用体系传导</strong><span>03:41 · AI / 监管科技 / 银行</span><span>推荐角度：债务驱动 AI 投资如何传导至信用体系</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:85%"></span></div></td><td><span class="chip risk-medium">中风险 · ✅ 跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="美联储会议纪要警告 AI 借贷风险向信用体系传导">证据</button><button class="btn primary small" data-action="generate" data-topic="美联储会议纪要警告 AI 借贷风险向信用体系传导">生成候选</button></div></td></tr>
+                <tr data-search="OpenAI IPO ARR 企业端 AI 华尔街见闻"><td><strong>85</strong></td><td class="title-cell"><strong>OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%</strong><span>09:09 · AI Agent / 金融科技 / 美股</span><span>推荐角度：IPO 叙事之外，观察收入质量与组织稳定性</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:78%"></span></div></td><td><span class="chip risk-medium">中风险 · ✅ 跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%">证据</button><button class="btn primary small" data-action="generate" data-topic="OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%">生成候选</button></div></td></tr>
+                <tr data-search="Hyperliquid 特朗普 加密 合规 监管科技 华尔街见闻"><td><strong>83</strong></td><td class="title-cell"><strong>特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美</strong><span>09:16 · 监管科技 / 加密 / 支付</span><span>推荐角度：离岸平台合规入美的产品路径与不确定性</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:88%"></span></div></td><td><span class="chip risk-high">高风险 · ⚠️ 观望</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美">证据</button><button class="btn primary small" data-action="generate" data-topic="特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美">生成候选</button></div></td></tr>
+                <tr data-search="LPR 银行 货币政策 利率 华尔街见闻"><td><strong>81</strong></td><td class="title-cell"><strong>中国 8 月 LPR 连续 15 个月保持不变</strong><span>09:00 · 银行 / 货币政策 / 宏观</span><span>推荐角度：保持资料库记录，本轮不生成跟进内容</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:62%"></span></div></td><td><span class="chip">低风险 · ❌ 不跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="中国 8 月 LPR 连续 15 个月保持不变">证据</button><button class="btn primary small" disabled title="跟进建议为不跟进">本轮不生成</button></div></td></tr>
+                <tr data-search="南京银行 信用减值 风险处置 智能风控 新浪财经"><td><strong>79</strong></td><td class="title-cell"><strong>南京银行回应信用减值损失同比上升：加大风险处置出清力度</strong><span>12:50 · 银行 / 智能风控 / 金融科技</span><span>推荐角度：风险出清为何抬高短期拨备压力</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:70%"></span></div></td><td><span class="chip risk-medium">中风险 · ⚠️ 观望</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="南京银行回应信用减值损失同比上升：加大风险处置出清力度">证据</button><button class="btn primary small" data-action="generate" data-topic="南京银行回应信用减值损失同比上升：加大风险处置出清力度">生成候选</button></div></td></tr>
+                <tr data-search="铁路 人工智能 落地应用 交通 新浪财经"><td><strong>77</strong></td><td class="title-cell"><strong>铁路行业成为人工智能落地应用的先行领域</strong><span>12:43 · AI Agent / 监管科技 / 基础设施</span><span>推荐角度：从通用聊天转向调度、巡检和维修工作流</span></td><td><span class="chip strong">2 个来源</span></td><td><div class="risk-bar"><span style="width:72%"></span></div></td><td><span class="chip">低风险 · ✅ 跟进</span></td><td><div class="row-actions"><button class="btn small" data-action="evidence" data-topic="铁路行业成为人工智能落地应用的先行领域">证据</button><button class="btn primary small" data-action="generate" data-topic="铁路行业成为人工智能落地应用的先行领域">生成候选</button></div></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+
+        <!-- =====================================================
+             PAGE 3: 对标账号观点
+             ===================================================== -->
+        <section class="page" data-page="accounts">
+          <div class="section-heading"><div><h2>对标账号观点 Agent</h2><p>回答“对标账号在说什么、哪些机制可借鉴、我们怎样写得不同”。</p></div><div class="section-actions"><button class="btn" data-action="add-account">＋ 添加对标账号</button><button class="btn primary" data-action="analyze-accounts">重新分析 93 条推文</button></div></div>
+          <div class="account-strip" id="account-strip">
+            <article class="account-card"><div class="account-top"><span class="avatar">GS</span><div><h3>Goldman Sachs</h3><span class="chip">@GoldmanSachs</span></div></div><p>机构官方 · 20 条真实推文 · <a href="https://x.com/GoldmanSachs" target="_blank" rel="noreferrer">主页 ↗</a></p></article>
+            <article class="account-card"><div class="account-top"><span class="avatar">JPM</span><div><h3>JPMorgan</h3><span class="chip">@jpmorgan</span></div></div><p>机构官方 · 19 条真实推文 · <a href="https://x.com/jpmorgan" target="_blank" rel="noreferrer">主页 ↗</a></p></article>
+            <article class="account-card"><div class="account-top"><span class="avatar">SV</span><div><h3>硅谷居士</h3><span class="chip">@SVScholar</span></div></div><p>个人博主 · 15 条真实推文 · <a href="https://x.com/SVScholar" target="_blank" rel="noreferrer">主页 ↗</a></p></article>
+            <article class="account-card"><div class="account-top"><span class="avatar">Se</span><div><h3>Serenity</h3><span class="chip">@aleabitoreddit</span></div></div><p>个人博主 · 19 条真实推文 · <a href="https://x.com/aleabitoreddit" target="_blank" rel="noreferrer">主页 ↗</a></p></article>
+            <article class="account-card"><div class="account-top"><span class="avatar">KZ</span><div><h3>KawzInvests</h3><span class="chip">@KawzInvests</span></div></div><p>个人博主 · 20 条真实推文 · <a href="https://x.com/KawzInvests" target="_blank" rel="noreferrer">主页 ↗</a></p></article>
+          </div>
+
+          <section class="panel" style="margin-bottom:12px"><div class="panel-header"><div><h2>账号内容画像</h2><p>基于 2026-08-20 采集快照；机构号与个人博主采用不同拆解口径</p></div><span class="chip strong">5 个真实账号</span></div><div class="panel-body account-strip">
+            <article class="account-card profile-dimensions"><h3>@GoldmanSachs</h3><p><strong>选题：</strong>AI 基建、债券、太空经济</p><p><strong>Hook：</strong>前所未有 / 史上最大 / 首个</p><p><strong>结构：</strong>事实陈述 → 数据/链接 → 行动号召</p><p><strong>互动方式：</strong>链接引导、@ 相关方、转发官方报告</p><p><strong>发布节奏：</strong>日更或隔日更，权威优先</p></article>
+            <article class="account-card profile-dimensions"><h3>@jpmorgan</h3><p><strong>选题：</strong>客户故事、行业趋势、区块链结算</p><p><strong>Hook：</strong>故事场景与人物开场</p><p><strong>结构：</strong>人物/场景 → 问题 → 解决方案 → 数据验证</p><p><strong>互动方式：</strong>Thread 提问、回复评论、转发客户</p><p><strong>发布节奏：</strong>每周 3~5 条，常做 Thread</p></article>
+            <article class="account-card profile-dimensions"><h3>@SVScholar</h3><p><strong>选题：</strong>财报、宏观、普通人理财</p><p><strong>Hook：</strong>现象级数字 + 对比</p><p><strong>结构：</strong>数字冲击 → 多国/公司对比 → 开放提问</p><p><strong>互动方式：</strong>提问驱动评论、引用原数据、回复高赞</p><p><strong>发布节奏：</strong>日更 1~3 条，提问收尾</p></article>
+            <article class="account-card profile-dimensions"><h3>@aleabitoreddit</h3><p><strong>选题：</strong>AI 硬件供应链瓶颈</p><p><strong>Hook：</strong>一手信息 + 数据链</p><p><strong>结构：</strong>TLDR 总起 → 证据链分点 → 结论/风险</p><p><strong>互动方式：</strong>深度回复、引用技术文档、@ 产业链账号</p><p><strong>发布节奏：</strong>日更多条，长 Thread 深拆</p></article>
+            <article class="account-card profile-dimensions"><h3>@KawzInvests</h3><p><strong>选题：</strong>光子学、云公司、小盘股</p><p><strong>Hook：</strong>反共识观点 + 数据轰炸</p><p><strong>结构：</strong>反常识结论 → 数据支撑 → 风险对冲</p><p><strong>互动方式：</strong>转发争议、回复质疑、分享仓位变化</p><p><strong>发布节奏：</strong>1~3 天/条，事件快反</p></article>
+          </div></section>
+          <div class="insight-columns">
+            <section class="insight-column"><h3>✓ 可借鉴规律</h3><ol class="numbered-list"><li>数字冲击 + 对比式开头：$500B、+492%、差 25 倍。</li><li>开放式提问驱动评论，SVScholar 的评论冠军均以提问收尾。</li><li>事件 + 一手数据 + 链接溯源，优先财报、公告和大会原话。</li><li>Thread 化拆分复杂主题。</li><li>固定栏目节奏：财报日必更、重大事件快反。</li></ol></section>
+            <section class="insight-column"><h3>× 不可照搬</h3><ol class="numbered-list"><li>机构号的无观点克制语气不适合个人号。</li><li>自曝仓位亏损细节存在合规风险。</li><li>直接引用他人长文大段转述存在抄袭风险。</li><li>全英文 + 美股代码密集输出与受众不对齐。</li><li>初期粉丝量不适合单日多条刷屏。</li></ol></section>
+            <section class="insight-column"><h3>↗ 差异化方向</h3><ol class="numbered-list"><li>从单点观点转为多来源分歧对照。</li><li>输出支付 / AI Agent / 监管科技运营清单。</li><li>观点外补充真实链接和不确定性说明。</li><li>借鉴数字冲击，但只聚焦我方赛道。</li><li>结合机构权威感与个人号鲜明观点。</li></ol></section>
+          </div>
+
+          <section class="panel" style="margin-bottom:12px"><div class="panel-header"><div><h2>高表现推文样例</h2><p>先提炼内容机制，再生成差异化候选并进入统一人工审核。</p></div><span class="chip strong">真实链接 5 条</span></div><div class="data-table-wrap"><table class="data-table"><thead><tr><th>账号</th><th>主题</th><th>互动快照</th><th>原帖</th><th>操作</th></tr></thead><tbody>
+            <tr><td><strong>@GoldmanSachs</strong></td><td>NVIDIA 联手高盛等设立 AI 算力融资平台（超 $500B）</td><td>260K 浏览 · 1K 赞 · 165 转 · 76 评论</td><td><a href="https://x.com/GoldmanSachs/status/2086920814520066549" target="_blank" rel="noreferrer">打开原帖 ↗</a></td><td><button class="btn primary small" data-action="generate-account" data-account-key="gs">生成候选</button></td></tr>
+            <tr><td><strong>@jpmorgan</strong></td><td>HexClad 产品创新与成长故事</td><td>31K 浏览 · 11 赞 · 18 转 · 87 评论</td><td><a href="https://x.com/jpmorgan/status/2079974757689172478" target="_blank" rel="noreferrer">打开原帖 ↗</a></td><td><button class="btn primary small" data-action="generate-account" data-account-key="jpm">生成候选</button></td></tr>
+            <tr><td><strong>@SVScholar</strong></td><td>想舒服地退休需要多少钱：各国数据对比</td><td>54K 浏览 · 128 赞 · 12 转 · 126 评论</td><td><a href="https://x.com/SVScholar/status/2089711443885351050" target="_blank" rel="noreferrer">打开原帖 ↗</a></td><td><button class="btn primary small" data-action="generate-account" data-account-key="sv">生成候选</button></td></tr>
+            <tr><td><strong>@aleabitoreddit</strong></td><td>$MRVL 与 $GOOGL 达成 $12.2B 定制硅协议</td><td>镜像快照未显示</td><td><a href="https://x.com/aleabitoreddit/status/2090103899302826302" target="_blank" rel="noreferrer">打开原帖 ↗</a></td><td><button class="btn primary small" data-action="generate-account" data-account-key="se">生成候选</button></td></tr>
+            <tr><td><strong>@KawzInvests</strong></td><td>做空云公司是“最快烧钱方式”</td><td>124K 浏览（引用推文）</td><td><a href="https://x.com/KawzInvests/status/2087541434333163660" target="_blank" rel="noreferrer">打开原帖 ↗</a></td><td><button class="btn primary small" data-action="generate-account" data-account-key="kz">生成候选</button></td></tr>
+          </tbody></table></div></section>
+          <section class="panel" style="margin-bottom:12px"><div class="panel-header"><div><h2>差异化方向候选</h2><p>使用对标机制，但改变对象、论证结构与结论</p></div><span class="chip strong">相似度阈值 0.55 / 0.75</span></div><div class="panel-body direction-list">
+            <article class="direction-row"><div><h4>从退休金额对比转为“数字 Hook 如何驱动评论”</h4><p>对比 @SVScholar · 相似度 0.42 · 机制分析，不提供理财建议</p></div><button class="btn primary small" data-action="generate-account" data-account-key="sv">生成候选</button></article>
+            <article class="direction-row"><div><h4>从 $500B 融资新闻转为 AI 算力金融产品结构</h4><p>对比 @GoldmanSachs · 相似度 0.36 · 补充产品链路与风险边界</p></div><button class="btn primary small" data-action="generate-account" data-account-key="gs">生成候选</button></article>
+            <article class="direction-row"><div><h4>从做空云公司观点转为“反共识表达的证据门槛”</h4><p>对比 @KawzInvests · 相似度 0.48 · 不复用仓位或交易建议</p></div><button class="btn primary small" data-action="generate-account" data-account-key="kz">生成候选</button></article>
+          </div></section>
+          <section class="panel" data-week-plan-panel><div class="panel-header"><div><h2>7 天内容计划表</h2><p>点击主题直接编辑；类型可切换。未提供真实链接的默认内容统一标记为演示数据。</p></div><button class="btn small" data-action="today-plan">今日发布计划（8.20）</button></div>
+            <div class="week-plan-wrap"><table class="data-table week-plan-table" data-weekly-plan><thead><tr><th>项目</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th><th>操作</th></tr></thead><tbody class="week-plan-body"></tbody></table></div>
+            <div class="plan-footer"><p>支持横向 / 纵向拖拽滚动；编辑结果与首页计划表实时同步。</p><button class="btn" data-action="add-plan-row">＋ 新增发布内容</button></div>
+            <div class="panel-body"><div class="similarity-demo" data-high-similarity><div><strong>发布前相似度关卡：示例 0.81</strong><p>对比 @SVScholar 原帖结构；命中“数字开场 + 多国对比 + 同句式提问”，不可直接确认。</p></div><button class="btn danger" data-action="rewrite-similarity">需人工改写</button></div></div>
+          </section>
+
+          <!-- 策略迭代区块已迁至「任务记忆与优化」页 -->
+        </section>
+
+        <!-- =====================================================
+             PAGE 4: 审核清单
+             ===================================================== -->
+        <section class="page" data-page="reviews">
+          <div class="section-heading"><div><h2>审核清单</h2><p>人工审核是最终关卡；系统不执行自动发布。</p></div><div class="section-actions"><button class="btn" data-action="batch-reject">批量驳回</button><button class="btn primary" data-action="export">导出已确认内容</button></div></div>
+          <div class="toolbar"><div class="tabs" role="tablist"><button class="tab active" data-review-filter="all">全部</button><button class="tab" data-review-filter="pending">待审核</button><button class="tab" data-review-filter="confirmed">已确认</button><button class="tab" data-review-filter="rejected">已驳回</button></div><div class="chip-row"><span class="chip">证据完整 3</span><span class="chip risk-high">高风险 1</span></div></div>
+          <div class="review-list" id="review-list">
+            <article class="review-card" data-status="pending" data-risk="low"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">Stripe 收购 OpenRouter：支付与 AI 基础设施的边界正在消失</h3><div class="review-meta"><span class="chip">每日热点</span><span class="chip">真实数据</span><span class="chip">查重完成</span><span class="chip">低风险</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm">确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div><div class="review-evidence"><span>2 个真实来源 · 最近引用 11:22 · 与近 30 天主题相似度 0.31</span><span class="mono">cand_001</span></div></article>
+            <article class="review-card" data-status="pending" data-risk="medium"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">AI 借贷风险如何从估值传导到信用体系？</h3><div class="review-meta"><span class="chip">每日热点</span><span class="chip">真实数据</span><span class="chip">查重完成</span><span class="chip risk-medium">中风险 · 需归因</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="美联储会议纪要警告 AI 借贷风险向信用体系传导">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm">确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div><div class="review-evidence"><span>2 个真实来源 · 需明确引用会议纪要 · 相似度 0.48</span><span class="mono">cand_002</span></div></article>
+            <article class="review-card" data-status="pending" data-risk="high"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">这个 AI 产品一定能帮你获得稳定收益</h3><div class="review-meta"><span class="chip">账号观点</span><span class="chip">演示数据</span><span class="chip">查重完成</span><span class="chip risk-high">高风险 · 收益承诺</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="高风险候选">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm" disabled>确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div><div class="review-evidence"><span>演示数据 · 命中“稳定收益”风险规则 · 禁止直接确认</span><span class="mono">cand_003</span></div></article>
+            <article class="review-card" data-status="confirmed" data-risk="low" data-candidate-id="cand_004" data-topic="金融内容运营的 5 项证据核验清单"><div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title">金融内容运营的 5 项证据核验清单</h3><div class="review-meta"><span class="chip">账号观点</span><span class="chip">演示数据</span><span class="chip">已确认</span><span class="chip">低风险</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="金融内容运营的证据核验清单">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="schedule">拟发布日期</button></div></div><div class="review-evidence"><span>演示数据 · 人工确认于 10:12 · 可进入发布排期</span><span class="mono">cand_004</span></div></article>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             PAGE 5: 任务记忆与优化（合并策略迭代与内容记忆）
+             ===================================================== -->
+        <section class="page" data-page="memory">
+          <div class="section-heading"><div><h2>任务记忆与优化</h2><p>调度、运行日志、近 30 天内容记忆与策略迭代闭环。左右两栏等高；右侧窗口可独立滚动查看完整 30 天记录。</p></div><div class="section-actions"><button class="btn" data-action="run-all">▶ 立即运行全部</button></div></div>
+          <div class="task-grid">
+            <article class="task-card"><h3>每日热点更新</h3><div class="task-status"><span class="chip strong">成功</span><strong>15:00</strong></div><p>获得 8 条真实热点 · 来源：新浪财经 / 华尔街见闻 / 东方财富 / 腾讯新闻</p></article>
+            <article class="task-card"><h3>对标账号分析</h3><div class="task-status"><span class="chip strong">成功</span><strong>12:40</strong></div><p>处理 5 个账号、93 条真实推文（20 / 19 / 15 / 19 / 20）</p></article>
+            <article class="task-card"><h3>记忆清理</h3><div class="task-status"><span class="chip">待运行</span><strong>02:00</strong></div><p>90 天归档；推荐检索窗口为近 30 天</p></article>
+            <article class="task-card"><h3>每周学习复盘</h3><div class="task-status"><span class="chip">每周五 20:00</span><strong>08-22</strong></div><p>回收本周已发布内容互动数据，更新策略权重并写入学习日志</p></article>
+          </div>
+
+          <div class="memory-split">
+            <section class="panel memory-split-left" data-iteration-panel>
+              <div class="panel-header"><div><h2>策略迭代 · 持续学习闭环</h2><p>回收已发布内容真实互动 + 人工采用/驳回记录，更新下一轮生成策略</p></div><span class="chip strong">演示数据 · 7 天闭环</span></div>
+              <!--
+                reviewActionLog（confirm / reject / modify）每 24h 汇总至 strategyAdjuster；
+                输出 topicWeights、riskWords、sourceCoolDown、rewriteTemplates，供下一轮候选生成使用。
+                Demo 仅静态展示该闭环，不改变 V0.9.1 review-card 的既有渲染逻辑。
+              -->
+              <div class="panel-body iteration-stack">
+                <section class="iteration-block">
+                  <h3>① 7 天复盘</h3>
+                  <div class="metrics-grid" style="margin-bottom:0">
+                    <article class="metric-card"><div class="metric-icon">发</div><div><div class="metric-value">5 条</div><div class="metric-label">本周发布 · 3 条已回收互动</div></div></article>
+                    <article class="metric-card"><div class="metric-icon">率</div><div><div class="metric-value">2.4%</div><div class="metric-label">平均互动率 · 基线 1.1%</div></div></article>
+                    <article class="metric-card"><div class="metric-icon">优</div><div><div class="metric-value" style="font-size:17px">提问式结尾</div><div class="metric-label">最佳内容 · 互动率 5.8%</div></div></article>
+                    <article class="metric-card"><div class="metric-icon">弱</div><div><div class="metric-value" style="font-size:17px">纯资讯转发</div><div class="metric-label">最差内容 · 互动率 0.3%</div></div></article>
+                  </div>
+                </section>
+
+                <section class="iteration-block">
+                  <h3>② 预测 vs 实际</h3>
+                  <div class="data-table-wrap"><table class="data-table" data-prediction-table><thead><tr><th>内容主题</th><th>预测互动率</th><th>实际互动率</th><th>偏差</th><th>结论</th></tr></thead><tbody>
+                    <tr><td><strong>Agent 上线检查清单</strong></td><td>2.2%</td><td>3.6%</td><td>+1.4pp</td><td>清单结构跑赢，保留</td></tr>
+                    <tr><td><strong>Stripe 模型路由层</strong></td><td>2.8%</td><td>2.4%</td><td>-0.4pp</td><td>数字 Hook 有效，产品解释偏长</td></tr>
+                    <tr><td><strong>美联储 AI 信贷风险</strong></td><td>1.9%</td><td>0.8%</td><td>-1.1pp</td><td>议题过重，下调纯宏观优先级</td></tr>
+                  </tbody></table></div>
+                </section>
+
+                <section class="iteration-block rules-block">
+                  <h3>③ 规则引擎示例</h3>
+                  <div class="about-grid">
+                    <div class="rule-note" style="margin:0"><strong>结构权重上调：</strong>若连续 3 条“提问式结尾”的互动率 &gt; 基线 1.5 倍，建议上调该结构权重，待人工确认后生效。</div>
+                    <div class="rule-note" style="margin:0"><strong>选题优先级下调：</strong>若某选题连续 2 周实际互动率 &lt; 基线 0.5 倍，降低该选题推荐优先级。</div>
+                  </div>
+                </section>
+
+                <details class="recovery-config" open>
+                  <summary><strong>数据回收配置（生产环境方案）</strong><span class="muted">按需收起</span></summary>
+                  <div class="recovery-config-body">
+                    <div class="about-grid">
+                      <div class="panel"><div class="panel-body form-grid"><div class="form-row"><label>X API Key</label><input class="field" value="••••••••••••（生产环境配置项）" readonly /></div><div class="form-row"><label>回收频率</label><div class="chip-row"><span class="chip strong">发布后 24h</span><span class="chip">发布后 7d</span></div></div><div class="form-row"><label>回收指标</label><div class="chip-row"><span class="chip">赞</span><span class="chip">转发</span><span class="chip">评论</span><span class="chip">浏览量</span></div></div></div></div>
+                      <div class="panel"><div class="panel-body"><strong>运行状态说明</strong><p class="muted">生产环境方案：接入 X API 自动回收；当前 Demo：静态样例，不宣称已实际接入。</p></div></div>
+                    </div>
+                  </div>
+                </details>
+
+                <section class="panel" data-human-feedback-panel>
+                  <div class="panel-header"><div><h3>④ 人工反馈 → 推荐调整</h3><p>从审核清单汇总采用/驳回记录，自动调整后续候选的选题权重与相似度阈值</p></div><span class="chip">规则引擎 + AI 摘要</span></div>
+                  <div class="panel-body">
+                    <div class="data-table-wrap"><table class="data-table"><thead><tr><th>人工动作</th><th>近 7 天</th><th>规则触发</th><th>推荐调整</th></tr></thead><tbody>
+                      <tr><td><strong>采用</strong>（确认候选）</td><td>5 条</td><td>某主题被连续 3 次人工确认</td><td>↑ 选题相似度阈值 +0.05，优先复用同结构</td></tr>
+                      <tr><td><strong>驳回</strong>（含原因）</td><td>3 条</td><td>某风险词出现 ≥ 2 次驳回</td><td>↓ 风险词触发即拦截 + 自动加入设置页「高风险表达」</td></tr>
+                      <tr><td><strong>修改后确认</strong></td><td>2 条</td><td>原候选与人工改写版本相似度 &lt; 0.6</td><td>记录改写模板，作为下次候选生成的优先风格</td></tr>
+                      <tr><td><strong>批量驳回</strong>（≥3 条）</td><td>1 次</td><td>同一来源/类型集中被驳回</td><td>该来源/类型进入 24h 冷却期</td></tr>
+                    </tbody></table></div>
+                    <div class="rule-note" style="margin-top:10px"><strong>闭环说明：</strong>审核清单每次「确认 / 驳回 / 修改」会写入 reviewActionLog，策略迭代层每 24h 汇总一次，与「真实互动回收」共同更新推荐权重。Demo 静态演示真实闭环机制，不改变现有 review-card 渲染逻辑。</div>
+                  </div>
+                </section>
+
+                <section class="iteration-block">
+                  <h3>⑤ 策略调整记录</h3>
+                  <div class="data-table-wrap"><table class="data-table"><thead><tr><th>日期</th><th>复盘发现</th><th>策略调整</th></tr></thead><tbody>
+                    <tr><td><strong>08-16</strong></td><td>提问式结尾评论互动 +68%</td><td>将「开放提问收尾」设为默认内容结构</td></tr>
+                    <tr><td><strong>08-19</strong></td><td>数字 Hook 打开率是纯观点标题的 2.1 倍</td><td>候选生成规则：首句必须含可核验数字</td></tr>
+                  </tbody></table></div>
+                </section>
+
+                <section class="iteration-block">
+                  <h3>⑥ 学习日志时间线</h3>
+                  <div class="learning-timeline">
+                    <article class="timeline-item"><time class="timeline-time">08-19 21:00</time><div class="timeline-copy"><span class="chip strong">策略更新</span><p>数字 Hook 权重上调，已写入生成规则</p></div></article>
+                    <article class="timeline-item"><time class="timeline-time">08-17 10:30</time><div class="timeline-copy"><span class="chip">回收互动</span><p>3 条推文实际互动数据已同步至复盘</p></div></article>
+                    <article class="timeline-item"><time class="timeline-time">08-14 09:00</time><div class="timeline-copy"><span class="chip">发布</span><p>2 条候选经人工确认后发布</p></div></article>
+                    <article class="timeline-item"><time class="timeline-time">08-13 20:00</time><div class="timeline-copy"><span class="chip">分析</span><p>5 账号 93 条推文完成首轮画像</p></div></article>
+                  </div>
+                </section>
+                <p class="muted" style="margin:0">生产环境方案：接入 X API 自动回收互动数据；本页为静态演示样例。</p>
+              </div>
+            </section>
+
+            <section class="panel memory-split-right">
+              <div class="panel-header"><div><h2>近 30 天内容记忆</h2><p>只改变当前候选的提示，不自动修改全局账号定位。窗口可独立滚动。</p></div><span class="chip strong">36 个主题</span></div>
+              <div class="panel-body memory-scroll" data-memory-scroll>
+                <table class="data-table memory-table"><thead><tr><th>主题</th><th>最终状态</th><th>反馈/风险</th><th>最近使用</th><th>对新候选影响</th></tr></thead><tbody data-memory-body></tbody></table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             PAGE 6: 系统设置
+             ===================================================== -->
+        <section class="page" data-page="settings">
+          <div class="section-heading"><div><h2>系统设置</h2><p>配置内容定位、公开数据源、调度和风险规则。</p></div><button class="btn primary" data-action="save-settings">保存设置</button></div>
+          <div class="settings-grid">
+            <section class="panel"><div class="panel-header"><div><h2>内容定位</h2><p>用于相关性评分和候选生成</p></div></div><div class="panel-body form-grid"><div class="form-row"><label for="audience">目标用户</label><input class="field" id="audience" value="金融科技产品经理、行业研究者、内容运营" /></div><div class="form-row"><label for="topics">重点领域</label><textarea id="topics">支付、AI Agent、监管科技、智能风控、财富管理</textarea></div><div class="form-row"><label for="forbidden">禁止主题</label><textarea id="forbidden">无来源的投资建议、收益承诺、自动交易引导</textarea></div></div></section>
+            <section class="panel"><div class="panel-header"><div><h2>数据源与调度</h2><p>仅使用公开数据及用户主动导入内容</p></div></div><div class="panel-body form-grid"><label class="check-row"><input type="checkbox" checked /> 新浪财经 7x24</label><label class="check-row"><input type="checkbox" checked /> 华尔街见闻 RSS</label><label class="check-row"><input type="checkbox" checked /> 东方财富 RSS</label><label class="check-row"><input type="checkbox" checked /> Yahoo Finance 辅助源</label><label class="check-row"><input type="checkbox" /> X API（待接入真实数据源）</label><label class="check-row"><input type="checkbox" /> Google Trends（待接入真实数据源）</label><div class="form-row"><label for="schedule">每日更新</label><input class="field" id="schedule" type="time" value="13:00" /></div></div></section>
+            <section class="panel"><div class="panel-header"><div><h2>风险规则</h2><p>规则关卡不替代人工合规审核</p></div></div><div class="panel-body form-grid"><div class="form-row"><label for="risk-words">高风险表达</label><textarea id="risk-words">保证收益、稳赚、无风险、明确买入、明确卖出</textarea></div><div class="form-row"><label>同质化阈值</label><div class="filters"><input class="field" value="0.55" aria-label="中风险阈值" /><input class="field" value="0.75" aria-label="高风险阈值" /></div><small>中风险 / 高风险建议阈值，需通过人工样本校准。</small></div></div></section>
+            <section class="panel"><div class="panel-header"><div><h2>全局边界</h2><p>统一写入候选和导出文件</p></div></div><div class="panel-body form-grid"><label class="check-row"><input type="checkbox" checked disabled /> 候选必须人工确认</label><label class="check-row"><input type="checkbox" checked disabled /> 禁止自动发布</label><label class="check-row"><input type="checkbox" checked disabled /> 缺少来源时禁止确认</label><label class="check-row"><input type="checkbox" checked disabled /> 不提供个性化投资建议</label></div></section>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             PAGE 7: 产品说明
+             ===================================================== -->
+        <section class="page" data-page="about">
+          <div class="section-heading"><div><h2>产品说明</h2><p>把笔试题 2 与题 4 串成一条可解释、可审核、可复盘的内容运营链路。</p></div><span class="chip strong">V0.6 · 多源验证</span></div>
+          <div class="about-stack">
+            <section class="panel"><div class="panel-header"><div><h2>① 需求解读</h2><p>两道题共享热点数据、审核关卡与学习记忆</p></div></div><div class="panel-body about-grid">
+              <div><h3>题 2｜每日热点 Agent</h3><ol class="about-list"><li>持续采集公开市场与行业热点。</li><li>完成事件去重与优先级排序。</li><li>判断是否值得我方 X 账号跟进。</li><li>生成事件摘要、信息来源、内容角度、英文候选。</li></ol></div>
+              <div><h3>题 4｜对标账号学习 Agent</h3><ol class="about-list"><li>拆解高表现内容的选题、Hook、结构、互动方式与节奏。</li><li>区分可借鉴机制与不可照搬表达。</li><li>生成原创、差异化的周度内容计划。</li><li>检查生成内容的相似度与抄袭风险。</li><li>依据后续表现持续调整学习策略。</li></ol></div>
+            </div></section>
+
+            <section class="panel"><div class="panel-header"><div><h2>② 工作流</h2><p>规则引擎处理稳定判断，LLM 负责理解与生成，关键关卡由人工确认</p></div></div><div class="panel-body workflow-flow" aria-label="产品工作流">
+              <article class="workflow-step"><span>01</span><strong>数据采集</strong><p>新浪 / 华尔街见闻 / 东方财富 / 腾讯新闻；后续接入万得</p></article>
+              <article class="workflow-step"><span>02</span><strong>事件去重</strong><p>主体 + 类型 + 24h；相似度 ≥ 0.70</p></article>
+              <article class="workflow-step"><span>03</span><strong>优先级排序</strong><p>30 / 25 / 30 / 15 加权</p></article>
+              <article class="workflow-step"><span>04</span><strong>跟进判断</strong><p>跟进 / 不跟进 / 观望 + 理由</p></article>
+              <article class="workflow-step"><span>05</span><strong>候选生成</strong><p>摘要 / 角度 / 英文 / 中文</p></article>
+              <article class="workflow-step"><span>06</span><strong>相似度检查</strong><p>0.75 高；0.55~0.75 中；低于 0.55 低</p></article>
+              <article class="workflow-step"><span>07</span><strong>人工审核</strong><p>证据、风险、事实、语言逐项复核</p></article>
+              <article class="workflow-step"><span>08</span><strong>发布</strong><p>只导出已确认内容，不自动发布</p></article>
+              <article class="workflow-step"><span>09</span><strong>回收复盘</strong><p>24h / 7d 表现 → 更新策略权重</p></article>
+            </div></section>
+
+            <section class="panel"><div class="panel-header"><div><h2>③ AI 使用方式</h2><p>明确 AI、规则与人工的责任边界</p></div></div><div class="data-table-wrap"><table class="data-table" data-ai-usage><thead><tr><th>环节</th><th>AI / LLM</th><th>规则引擎</th><th>必须人工确认</th></tr></thead><tbody>
+              <tr><td><strong>热点采集</strong></td><td>×</td><td>RSS / 页面解析、URL 去重</td><td>×</td></tr>
+              <tr><td><strong>事件去重</strong></td><td>辅助语义相似度</td><td>主体 + 类型 + 时间窗指纹</td><td>合并边界案例</td></tr>
+              <tr><td><strong>优先级打分</strong></td><td>×</td><td>时效 / 影响 / 相关性 / 传播潜力加权</td><td>×</td></tr>
+              <tr><td><strong>跟进判断</strong></td><td>根据账号定位生成建议</td><td>风险等级、赛道匹配</td><td>最终是否跟进</td></tr>
+              <tr><td><strong>候选内容生成</strong></td><td>摘要、角度、中英文候选</td><td>×</td><td>发布前全部复核</td></tr>
+              <tr><td><strong>相似度检查</strong></td><td>语义相似度</td><td>字符相似度与阈值判定</td><td>高风险项改写</td></tr>
+              <tr><td><strong>对标账号画像</strong></td><td>从 93 条推文提炼 5 维度</td><td>互动数据筛选</td><td>关键结论复核</td></tr>
+              <tr><td><strong>策略迭代</strong></td><td>生成复盘结论</td><td>连续 N 条跑赢规则</td><td>策略更新确认</td></tr>
+            </tbody></table></div></section>
+
+            <div class="about-grid">
+              <section class="panel"><div class="panel-header"><div><h2>④ 人工审核点</h2><p>以下条件不允许跳过人工关卡</p></div></div><div class="panel-body"><ol class="about-list"><li><strong>高风险内容：</strong>加密、政治敏感、个股具体买卖建议。</li><li><strong>收益承诺：</strong>“涨幅、暴涨、稳赚”等表述必须删除或增加不确定性说明。</li><li><strong>未核验来源：</strong>来源数 &lt; 2 或仅为自媒体 / 股吧，需补源或降级。</li><li><strong>相似度超限：</strong>与原文相似度 ≥ 0.75 必须人工改写。</li><li><strong>英文候选：</strong>发布前逐句核对事实、数字与语气。</li></ol></div></section>
+              <section class="panel"><div class="panel-header"><div><h2>⑤ 当前局限</h2><p>Demo 边界保持诚实可解释</p></div></div><div class="panel-body"><ol class="about-list"><li>部分多源聚合仍依赖人工补源。</li><li>X 完整近 30 天数据需官方 API；当前为镜像快照 + 真实推文样例。</li><li>LLM 英文候选可能出现事实或语气偏差。</li><li>策略迭代面板目前使用静态演示数据。</li><li>复杂事件的去重边界仍需人工判断。</li></ol></div></section>
+            </div>
+
+            <section class="panel"><div class="panel-header"><div><h2>⑥ 后续优化</h2><p>从可演示 MVP 演进为可持续运营系统</p></div></div><div class="panel-body about-grid">
+              <div class="rule-note" style="margin:0"><strong>更多来源：</strong>接入财联社、金十数据、Bloomberg RSS、万得（Wind），提高 3 源以上热点比例；其中万得用于国内宏观、债券及上市公司公告类事件的权威校验。</div>
+              <div class="rule-note" style="margin:0"><strong>X API：</strong>替换镜像快照，自动采集近 30 天推文并回收互动。</div>
+              <div class="rule-note" style="margin:0"><strong>自动反馈：</strong>回收赞、转发、评论、浏览量，更新策略权重。</div>
+              <div class="rule-note" style="margin:0"><strong>A/B 测试：</strong>同一热点生成 2~3 个 Hook，分批验证互动率。</div>
+              <div class="rule-note" style="margin:0"><strong>账号定位配置：</strong>新增赛道、人设、受众、频率输入，明确差异化基准。</div>
+            </div></section>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             PAGE 8: 高保真预览（原型说明下方入口）
+             ===================================================== -->
+        <section class="page" data-page="highfidelity">
+          <div class="section-heading">
+            <div><h2>高保真预览</h2><p>基于同一首页信息架构的两种视觉方向；点击图片可在新窗口查看原图。</p></div>
+            <span class="chip strong">2 个视觉方向</span>
+          </div>
+          <div class="hifi-preview-grid">
+            <figure class="panel hifi-preview-card">
+              <div class="panel-header"><div><h2>方向 01｜企业后台风格</h2><p>深色侧栏、蓝色主操作，强调可信、清晰与金融科技专业感。</p></div><span class="chip">P4</span></div>
+              <a class="hifi-preview-frame" href="Content_Radar_高保真预览_企业后台_01.png" target="_blank" rel="noreferrer" aria-label="打开企业后台风格高保真原图">
+                <img src="Content_Radar_高保真预览_企业后台_01.png" alt="Content Radar 首页企业后台风格高保真预览" />
+              </a>
+              <figcaption class="hifi-preview-note muted">适合金融科技企业内部运营后台；视觉层级更稳健。</figcaption>
+            </figure>
+            <figure class="panel hifi-preview-card">
+              <div class="panel-header"><div><h2>方向 02｜时尚风格</h2><p>浅色侧栏、橙色强调，整体更轻盈，突出内容产品与传播感。</p></div><span class="chip">P5</span></div>
+              <a class="hifi-preview-frame" href="Content_Radar_高保真预览_时尚风格_02.png" target="_blank" rel="noreferrer" aria-label="打开时尚风格高保真原图">
+                <img src="Content_Radar_高保真预览_时尚风格_02.png" alt="Content Radar 首页时尚风格高保真预览" />
+              </a>
+              <figcaption class="hifi-preview-note muted">适合内容运营演示与作品集展示；视觉表达更活跃。</figcaption>
+            </figure>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- EDITABLE SECTION: Mobile bottom navigation -->
+  <nav class="mobile-nav" aria-label="移动端导航">
+    <button class="active" data-page-target="dashboard"><span>⌂</span><span>工作台</span></button>
+    <button data-page-target="hotspots"><span>♨</span><span>每日热点</span></button>
+    <button data-page-target="accounts"><span>◎</span><span>对标账号</span></button>
+    <button data-page-target="reviews"><span>☷</span><span>审核</span></button>
+    <button data-page-target="about"><span>ⓘ</span><span>说明</span></button>
+  </nav>
+
+  <!-- Reusable modal -->
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header"><h2 id="modal-title">详情</h2><button class="icon-btn" data-action="close-modal" aria-label="关闭">×</button></div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"><button class="btn" data-action="close-modal">关闭</button></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* =========================================================
+       EDITABLE DATA｜真实数据快照 + 演示审核数据
+       ========================================================= */
+    const pageMeta = {
+      dashboard: ["今日工作台", "最近更新 13:00 · 真实数据 + 演示数据"],
+      hotspots: ["每日热点", "公开来源 → 事件聚类 → 评分 → 候选内容"],
+      accounts: ["对标账号观点", "真实账号 → 内容画像 → 机制借鉴 → 差异化方向"],
+      reviews: ["审核清单", "人工确认后才可导出；系统不自动发布"],
+      memory: ["任务记忆与优化", "调度、运行日志、近 30 天内容记忆与策略迭代闭环"],
+      settings: ["系统设置", "内容定位、数据源、调度与金融风险规则"],
+      about: ["产品说明", "需求解读、工作流、AI 边界与后续优化"],
+      highfidelity: ["高保真预览", "同一首页信息架构的企业后台与时尚风格方向"]
+    };
+
+    const evidenceMap = {
+      "Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型": [
+        ["华尔街见闻", "2026-08-20 11:22", "https://wallstreetcn.com/articles/3779862"],
+        ["新浪财经", "2026-08-17 16:32", "https://t.cj.sina.cn/articles/view/1278485542/4c34242602002dvcg"]
+      ],
+      "中国信通院联合淘宝闪购发布首份即时零售智能体可信规范": [
+        ["新浪财经 7x24", "2026-08-20 12:11", "https://wap.cj.sina.cn/pc/7x24/5049033"],
+        ["东方财富", "2026-08-20 12:36", "https://guba.eastmoney.com/news,cjpl,1761892851.html"]
+      ],
+      "美联储会议纪要警告 AI 借贷风险向信用体系传导": [
+        ["东方财富", "2026-08-20 03:41", "http://finance.eastmoney.com/news/1351,202608203846736531.html"],
+        ["新浪财经", "2026-08-20 09:26", "https://finance.sina.com.cn/wm/2026-08-20/doc-ininxkry2175447.shtml"]
+      ],
+      "OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%": [
+        ["华尔街见闻", "2026-08-20 09:09", "https://wallstreetcn.com/articles/3779849"],
+        ["新浪新闻", "2026-08-20 13:49", "https://k.sina.com.cn/article_5952915705_162d248f906703lwjm.html"]
+      ],
+      "特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美": [
+        ["华尔街见闻", "2026-08-20 09:16", "https://wallstreetcn.com/articles/3779851"],
+        ["新浪财经", "2026-08-20 14:19", "https://finance.sina.com.cn/stock/usstock/c/2026-08-20/doc-ininxvfr6774104.shtml"]
+      ],
+      "中国 8 月 LPR 连续 15 个月保持不变": [
+        ["华尔街见闻", "2026-08-20 09:00", "https://wallstreetcn.com/articles/3779854"],
+        ["东方财富", "2026-08-20 09:59", "https://finance.eastmoney.com/a/202608203847617887.html"]
+      ],
+      "南京银行回应信用减值损失同比上升：加大风险处置出清力度": [
+        ["新浪财经 7x24", "2026-08-20 12:50", "https://wap.cj.sina.cn/pc/7x24/5049057"],
+        ["东方财富", "2026-08-20 12:49", "https://finance.eastmoney.com/a/202608203847573854.html"]
+      ],
+      "铁路行业成为人工智能落地应用的先行领域": [
+        ["新浪财经 7x24", "2026-08-20 12:43", "https://wap.cj.sina.cn/pc/7x24/5049053"],
+        ["腾讯新闻 / 中新网", "2026-08-20 14:26", "https://new.qq.com/rain/a/20260820A089Q500"]
+      ]
+    };
+
+    const calendarData = {
+      "2026-07": [
+        { day: 4, title: "美国 6 月非农就业报告", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 15, title: "美国 6 月 CPI 通胀", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 16, title: "美国 6 月 PPI 生产者物价", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 20, title: "中国 7 月 LPR 报价", type: "cn-macro", time: "09:15", note: "连续第 14 个月维持 3.0% / 3.5%", url: "https://www.wind.com.cn/portal/zh/Insights/insightsDetail.html?id=6D7AF3D8F62E97D7F9378F2900D46A7B" },
+        { day: 28, title: "美联储 7 月 FOMC 会议开始", type: "us-macro", time: "—", note: "利率决议前闭门会议", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 29, title: "美联储 7 月 FOMC 会议", type: "us-macro", time: "—", note: "利率决议前闭门会议", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 30, title: "美联储 7 月利率决议 + 发布会", type: "us-macro", time: "02:00", note: "北京时间 02:00 公布", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 31, title: "美国 6 月 PCE 通胀", type: "us-macro", time: "20:30", note: "美联储锚定通胀指标", url: "https://www.readmarkets.com/calendar/macro" }
+      ],
+      "2026-08": [
+        { day: 1, title: "美国 7 月非农就业报告", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 7, title: "美国 7 月非农就业报告（修正后口径）", type: "us-macro", time: "—", note: "部分日历标注为 8 月首份非农", url: "https://wallstreetcn.com/articles/3778433" },
+        { day: 9, title: "中国 7 月 CPI / PPI", type: "cn-macro", time: "09:30", note: "检验政治局会议后物价走向", url: "https://wallstreetcn.com/articles/3778433" },
+        { day: 12, title: "美国 7 月 CPI 通胀", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 13, title: "美国 7 月 PPI 生产者物价", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 14, title: "美国 7 月零售销售", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 20, title: "中国 8 月 LPR 报价", type: "cn-macro", time: "09:15", note: "今天 · 连续第 15 个月不变", url: "https://wallstreetcn.com/articles/3779854", highlight: true },
+        { day: 21, title: "美联储 7 月会议纪要", type: "us-macro", time: "02:00", note: "北京时间 02:00 公布", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 26, title: "美国 Q2 GDP 修正值 + 7 月 PCE", type: "us-macro", time: "20:30", note: "同日发布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 27, title: "杰克逊霍尔全球央行年会", type: "us-macro", time: "—", note: "全球央行政策风向会议", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 28, title: "杰克逊霍尔全球央行年会", type: "us-macro", time: "—", note: "全球央行政策风向会议", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 29, title: "杰克逊霍尔全球央行年会", type: "us-macro", time: "—", note: "全球央行政策风向会议", url: "https://www.readmarkets.com/calendar/macro" }
+      ],
+      "2026-09": [
+        { day: 4, title: "美国 8 月非农就业报告", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 10, title: "美国 8 月 PPI 生产者物价", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 11, title: "美国 8 月 CPI 通胀", type: "us-macro", time: "20:30", note: "北京时间 20:30 公布", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 15, title: "美联储 9 月 FOMC 会议", type: "us-macro", time: "—", note: "含经济预测与点阵图", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 16, title: "美联储 FOMC 会议 / 美国零售销售", type: "us-macro", time: "02:00 / 20:30", note: "会议与零售销售同日窗口", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 18, title: "美联储 9 月利率决议 + 发布会", type: "us-macro", time: "02:00", note: "北京时间 02:00 公布", url: "https://xueqiu.com/4694237522/393575825" },
+        { day: 20, title: "中国 9 月 LPR 报价", type: "cn-macro", time: "09:15", note: "惯常窗口", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 26, title: "美国 8 月 PCE 通胀", type: "us-macro", time: "20:30", note: "美联储锚定通胀指标", url: "https://www.readmarkets.com/calendar/macro" },
+        { day: 30, title: "美国 Q2 GDP 终值 + 8 月 PCE", type: "us-macro", time: "20:30", note: "同日发布", url: "https://www.readmarkets.com/calendar/macro" }
+      ]
+    };
+
+    const calendarMonths = ["2026-07", "2026-08", "2026-09"];
+    let calendarMonthIndex = 1;
+    const fixedToday = new Date("2026-08-20T12:00:00");
+
+    const planWeekDates = ["2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-22", "2026-08-23"];
+    const planTypeOptions = ["全部主题", "支付", "AI Agent", "监管科技", "地缘政治", "突发利空", "利好事件", "宏观数据", "行业热点"];
+    const planTypeClass = { "地缘政治": "type-geopolitics", "突发利空": "type-negative", "利好事件": "type-positive", "宏观数据": "type-macro", "行业热点": "type-industry" };
+    const weekPlanRows = [
+      { id: "row-midday", project: "午间短评", days: [
+        { text: "油轮运费跳涨影响", type: "地缘政治", source: "演示数据" }, { text: "半导体板块异动", type: "利好事件", source: "演示数据" }, { text: "美债收益率冲高回落", type: "宏观数据", source: "演示数据" }, { text: "英伟达财报前瞻", type: "行业热点", source: "演示数据" }, { text: "特朗普加密政策表态", type: "地缘政治", source: "演示数据" }, { text: "", type: "行业热点", source: "" }, { text: "", type: "行业热点", source: "" }
+      ] },
+      { id: "row-evening", project: "晚间深度", days: [
+        { text: "地缘冲突对供应链冲击", type: "地缘政治", source: "演示数据" }, { text: "AI 模型计费层变革", type: "行业热点", source: "演示数据" }, { text: "鲍威尔讲话解读", type: "宏观数据", source: "演示数据" }, { text: "杰克逊霍尔年会前瞻", type: "宏观数据", source: "演示数据" }, { text: "本周内容互动复盘", type: "行业热点", source: "演示数据" }, { text: "", type: "行业热点", source: "" }, { text: "", type: "行业热点", source: "" }
+      ] },
+      { id: "row-account", project: "账号观点", days: [
+        { text: "SVScholar：退休需要多少钱", type: "宏观数据", source: "账号观点", account: "SV", accountKey: "sv", url: "https://x.com/SVScholar/status/2089711443885351050", similarity: "0.42 · 低", suggestion: "拆解数字对比与开放提问机制，不复用退休理财建议。" },
+        { text: "GoldmanSachs：AI 算力融资平台", type: "利好事件", source: "账号观点", account: "GS", accountKey: "gs", url: "https://x.com/GoldmanSachs/status/2086920814520066549", similarity: "0.36 · 低", suggestion: "从金额冲击转向算力融资产品结构与风险。" },
+        { text: "KawzInvests：云公司做空逻辑", type: "突发利空", source: "账号观点", account: "KZ", accountKey: "kz", url: "https://x.com/KawzInvests/status/2087541434333163660", similarity: "0.48 · 低", suggestion: "分析反共识表达所需证据，不复用仓位与交易建议。" },
+        { text: "JPMorgan：客户成长故事", type: "行业热点", source: "账号观点", account: "JPM", accountKey: "jpm", url: "https://x.com/jpmorgan/status/2079974757689172478", similarity: "0.39 · 低", suggestion: "保留人物问题链，改写为金融产品验证方法。" },
+        { text: "Serenity：AI 硬件供应链", type: "行业热点", source: "账号观点", account: "Se", accountKey: "se", url: "https://x.com/aleabitoreddit/status/2090103899302826302", similarity: "0.44 · 低", suggestion: "保留证据链结构，换成金融科技基础设施视角。" },
+        { text: "", type: "行业热点", source: "" }, { text: "", type: "行业热点", source: "" }
+      ] },
+      { id: "row-4", project: "项目 4", days: Array.from({ length: 7 }, () => ({ text: "", type: "行业热点", source: "" })) },
+      { id: "row-5", project: "项目 5", days: Array.from({ length: 7 }, () => ({ text: "", type: "行业热点", source: "" })) }
+    ];
+
+    const confirmedSchedules = {};
+    let pendingSchedule = null;
+    let candidateSequence = 100;
+
+    const accountCandidateMap = {
+      sv: { account: "@SVScholar", sourceType: "真实数据", title: "各国退休成本对比：为什么数字冲击比观点更有传播力？", summary: "@SVScholar 发布各国退休所需金额对比，引发 126 条评论；高表现关键在数字冲击与开放提问。", angle: "不照搬退休理财建议，只分析“数字对比 + 开放提问”如何驱动互动。", en: "What makes a finance thread get 126 comments? A single number comparison plus an open question. This is a case study in hook design—not retirement advice.", zh: "@SVScholar 的退休成本推文获得 126 条评论。更值得学习的是内容机制：极端数字、多国对比和开放提问，而不是照搬理财结论。", url: "https://x.com/SVScholar/status/2089711443885351050", similarity: "0.42 · 低" },
+      gs: { account: "@GoldmanSachs", sourceType: "真实数据", title: "超过 $500B 的 AI 算力融资：金融产品正在怎样重构？", summary: "高盛相关推文以超 $500B 数字建立冲击，并链接权威融资平台信息。", angle: "借鉴权威数字 Hook，补充算力融资结构、参与方和风险边界。", en: "A $500B+ AI financing platform is more than a headline. It shows how compute is becoming a financial product—with lenders, risk allocation, and long-duration capital.", zh: "超过 5000 亿美元的 AI 融资平台，不只是一个大数字。它意味着算力正在成为带有融资结构、风险分配和长期资本约束的金融产品。", url: "https://x.com/GoldmanSachs/status/2086920814520066549", similarity: "0.36 · 低" },
+      jpm: { account: "@jpmorgan", sourceType: "真实数据", title: "客户故事为什么比产品参数更能解释金融服务价值？", summary: "JPMorgan 以 HexClad 客户成长故事获得高评论互动，结构是人物、问题、解决方案与数据验证。", angle: "把故事结构用于产品价值验证，不照搬客户品牌叙事。", en: "A customer story works when it proves a product decision: person, constraint, intervention, and measurable change. Storytelling is a validation structure—not decoration.", zh: "好的客户故事不是包装，而是一条产品验证链：谁遇到什么约束、产品如何介入、结果怎样被数据证明。", url: "https://x.com/jpmorgan/status/2079974757689172478", similarity: "0.39 · 低" },
+      se: { account: "@aleabitoreddit", sourceType: "真实数据", title: "从 $12.2B 定制硅协议看 AI 硬件证据链怎么写", summary: "原帖围绕定制硅协议构建 TLDR 与多层证据链，适合学习复杂产业内容的拆解方式。", angle: "保留证据链与 TLDR，改写成金融科技基础设施的判断框架。", en: "A $12.2B custom-silicon deal is useful only when the evidence chain is clear: capacity, buyer commitment, bottlenecks, and execution risk.", zh: "定制硅协议的价值不只在金额。内容要把产能、客户承诺、瓶颈和执行风险连成一条可核验的证据链。", url: "https://x.com/aleabitoreddit/status/2090103899302826302", similarity: "0.44 · 低" },
+      kz: { account: "@KawzInvests", sourceType: "真实数据", title: "反共识观点怎样避免沦为情绪化交易建议？", summary: "原帖用“做空云公司最快烧钱”建立反共识冲突，并以数据支撑观点。", angle: "分析反共识表达的证据门槛与风险说明，不复用仓位或买卖建议。", en: "A contrarian hook earns attention, but evidence earns trust. The safer structure is claim, falsifiable data, counter-risk, and uncertainty—not a trade call.", zh: "反共识结论能获得注意力，但只有可证伪数据、反向风险和不确定性说明才能建立信任；这不是交易建议。", url: "https://x.com/KawzInvests/status/2087541434333163660", similarity: "0.48 · 低" }
+    };
+
+    const contentMap = {
+      "Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型": {
+        summary: "两家公开来源均指向 Stripe 以约 70 亿美元以上价格收购 OpenRouter，支付基础设施正延伸至模型路由与 Token 计费层。",
+        angle: "支付公司为何进入 AI 模型分发与计费层，而不只是在现有业务中调用模型。",
+        en: "Stripe's reported $7B+ OpenRouter deal is a bet on AI's billing layer—not just model access. The boundary between payments and model routing is getting thinner. #Stripe #OpenRouter #Fintech",
+        zh: "Stripe 拟以约 70 亿美元以上收购 OpenRouter。比金额更值得关注的是：支付公司正在进入模型路由与 Token 计费层，金融科技和 AI 基础设施的边界进一步变薄。"
+      },
+      "中国信通院联合淘宝闪购发布首份即时零售智能体可信规范": {
+        summary: "规范以任务成功率、异常处理率和指令拦截率等指标，定义即时零售 Agent 的可信边界。",
+        angle: "把行业规范翻译成一份 AI Agent 上线前可执行的产品验收清单。",
+        en: "Agent trust is becoming measurable: 95% task success, 90% exception handling, and 99% instruction interception. Standards are turning safety into product acceptance criteria. #AIAgents #RetailTech",
+        zh: "Agent 的“可信”正在变成可验收指标：任务成功率、异常处理率、指令拦截率都能进入上线关卡。产品团队需要的不是一句安全承诺，而是一份可测试清单。"
+      },
+      "美联储会议纪要警告 AI 借贷风险向信用体系传导": {
+        summary: "会议纪要提示，债务融资推动的 AI 资本开支可能把估值波动传导至贷款机构与信用市场。",
+        angle: "绘制从 AI 资本开支、债务融资到贷款机构的风险传导链。",
+        en: "The Fed's AI warning is not only about valuations—it is about how debt-funded capex could reach lenders. The next AI risk map may sit inside the credit system. #AI #CreditRisk #Fintech",
+        zh: "美联储对 AI 的担忧不只在估值。如果资本开支越来越依赖债务融资，风险可能沿着企业融资、贷款机构与信用市场继续传导。"
+      },
+      "OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%": {
+        summary: "公开报道同时呈现 2027 年上市预期、企业 ARR 增长与高管变动，增长叙事与治理信号并存。",
+        angle: "不只讨论 IPO 时间表，对照收入质量、算力经济性与组织稳定性。",
+        en: "OpenAI is reportedly targeting a 2027 listing as enterprise ARR grows 50%. The stronger question is whether revenue quality, compute economics, and governance can scale together. #OpenAI #EnterpriseAI",
+        zh: "OpenAI 的上市预期与企业 ARR 增长很吸睛，但真正决定长期质量的，是收入结构、算力经济性和组织稳定性能否同步扩张。"
+      },
+      "特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美": {
+        summary: "相关报道涉及政治人物、监管路径和离岸加密平台，正式规则与合规细节仍存在较高不确定性。",
+        angle: "只拆解可能的合规入美路径，不放大政治表态，也不提供交易建议。",
+        en: "Hyperliquid's possible U.S. entry puts regulation—not product speed—at the center. Any rollout still depends on formal rules and verified compliance details. #Crypto #RegTech",
+        zh: "Hyperliquid 是否进入美国市场，关键不是产品速度，而是正式监管规则和可验证的合规路径。当前信息仍具不确定性，适合观望并持续补证。"
+      },
+      "中国 8 月 LPR 连续 15 个月保持不变": {
+        summary: "1 年期和 5 年期以上 LPR 连续第 15 个月保持不变，属于低风险但与账号定位相关性较弱的宏观更新。",
+        angle: "保留为背景资料，不在本轮内容计划中主动跟进。",
+        en: "China kept its key LPR rates unchanged for a 15th month. The signal is continuity, but the topic is lower priority for this account's fintech and AI positioning. #Banking",
+        zh: "LPR 连续第 15 个月不变，信息本身重要但与当前账号的支付、AI Agent 与监管科技定位相关性较低，本轮建议不跟进。"
+      },
+      "南京银行回应信用减值损失同比上升：加大风险处置出清力度": {
+        summary: "南京银行信用减值损失同比上升 34.77%，公开回应将其归因于加大风险处置与出清力度。",
+        angle: "解释银行加速风险出清为何可能带来更高的短期拨备成本。",
+        en: "Nanjing Bank's credit impairment losses rose 34.77% year over year as it accelerated risk disposal. Cleaner books can still mean higher near-term provisioning costs. #Banking #RiskManagement",
+        zh: "南京银行信用减值损失同比上升 34.77%。这不等于简单的风险恶化，也可能反映更主动的风险出清；仍需结合后续资产质量指标判断。"
+      },
+      "铁路行业成为人工智能落地应用的先行领域": {
+        summary: "铁路场景已有大规模摄像头与预警数据基础，AI 的价值更接近调度、巡检和维修等具体工作流。",
+        angle: "从通用聊天机器人转向高可靠的行业任务编排与异常闭环。",
+        en: "Rail is becoming an early proving ground for applied AI. The opportunity is not a generic chatbot—it is safer scheduling, inspection, dispatch, and maintenance workflows. #AI #TransportTech",
+        zh: "铁路是 AI 落地较早的行业之一。真正有价值的不是通用聊天，而是把调度、巡检、预警和维修串成可追踪、可审核的工作流。"
+      }
+    };
+
+    const todayPriority = [
+      { score: 94, type: "daily", topic: "Stripe 收购 OpenRouter，支付巨头向 AI 基础设施转型", time: "11:22 更新", tags: ["2 个来源", "真实数据", "支付", "低风险"] },
+      { score: 91, type: "daily", topic: "中国信通院联合淘宝闪购发布首份即时零售智能体可信规范", time: "12:11 更新", tags: ["2 个来源", "真实数据", "监管科技", "低风险"] },
+      { score: 89, type: "account", key: "sv", category: "宏观数据", tags: ["@SVScholar", "真实数据", "宏观数据", "低风险"] },
+      { score: 87, type: "daily", topic: "美联储会议纪要警告 AI 借贷风险向信用体系传导", time: "03:41 更新", tags: ["2 个来源", "真实数据", "银行", "中风险"] },
+      { score: 86, type: "account", key: "gs", category: "利好事件", tags: ["@GoldmanSachs", "真实数据", "利好事件", "低风险"] },
+      { score: 85, type: "daily", topic: "OpenAI CFO 称公司将在 2027 年上市，企业端 ARR 增长 50%", time: "10:18 更新", tags: ["2 个来源", "真实数据", "金融科技", "中风险"] },
+      { score: 83, type: "daily", topic: "特朗普为 Hyperliquid 站台，白宫推动离岸加密交易平台合规入美", time: "09:56 更新", tags: ["2 个来源", "真实数据", "监管科技", "高风险"] },
+      { score: 81, type: "daily", topic: "中国 8 月 LPR 连续 15 个月保持不变", time: "09:15 更新", tags: ["2 个来源", "真实数据", "宏观数据", "低风险", "❌ 不跟进"], followup: false },
+      { score: 80, type: "account", key: "kz", category: "突发利空", tags: ["@KawzInvests", "真实数据", "突发利空", "中风险"] },
+      { score: 79, type: "daily", topic: "南京银行回应信用减值损失同比上升：加大风险处置出清力度", time: "08:42 更新", tags: ["2 个来源", "真实数据", "银行", "中风险"] }
+    ].sort((a, b) => b.score - a.score);
+
+    const memoryTopics = [
+      { topic: "AI Agent 长期记忆", source: "每日热点", status: "已确认", risk: "—", lastUsed: "7 天前", effect: "降低新颖度" },
+      { topic: "稳定收益类表达", source: "账号观点", status: "已驳回", risk: "金融合规风险", lastUsed: "今天", effect: "高风险拦截" },
+      { topic: "支付机构 AI 风控", source: "每日热点", status: "待审核", risk: "—", lastUsed: "今天", effect: "相似主题提示" },
+      { topic: "宏观数据 LPR 引用", source: "每日热点", status: "已确认", risk: "—", lastUsed: "3 天前", effect: "降低新颖度" },
+      { topic: "AI 硬件供应链观点", source: "账号观点", status: "已确认", risk: "—", lastUsed: "5 天前", effect: "保留机制" },
+      { topic: "地缘冲突推文", source: "账号观点", status: "已驳回", risk: "政治敏感", lastUsed: "8 天前", effect: "高风险拦截" },
+      { topic: "加密政策表态", source: "每日热点", status: "待审核", risk: "中风险", lastUsed: "6 天前", effect: "相似主题提示" },
+      { topic: "反共识做空观点", source: "账号观点", status: "已确认", risk: "—", lastUsed: "4 天前", effect: "保留机制" },
+      { topic: "银行信用减值类", source: "每日热点", status: "已确认", risk: "—", lastUsed: "10 天前", effect: "降低新颖度" },
+      { topic: "客户故事型叙事", source: "账号观点", status: "已确认", risk: "—", lastUsed: "9 天前", effect: "保留机制" },
+      { topic: "AI 算力融资观点", source: "账号观点", status: "已确认", risk: "—", lastUsed: "2 天前", effect: "保留机制" },
+      { topic: "宏观数据 PCE 引用", source: "每日热点", status: "已驳回", risk: "已过时", lastUsed: "12 天前", effect: "已过时降权" },
+      { topic: "AI 借贷风险议题", source: "每日热点", status: "已确认", risk: "—", lastUsed: "1 天前", effect: "降低新颖度" },
+      { topic: "上市公司回购公告", source: "每日热点", status: "待审核", risk: "中风险", lastUsed: "4 天前", effect: "相似主题提示" },
+      { topic: "即时零售智能体规范", source: "每日热点", status: "已确认", risk: "—", lastUsed: "今天", effect: "保留机制" },
+      { topic: "信托机构 AI 落地", source: "每日热点", status: "待审核", risk: "—", lastUsed: "3 天前", effect: "相似主题提示" },
+      { topic: "稳定币监管框架", source: "每日热点", status: "已驳回", risk: "合规风险", lastUsed: "6 天前", effect: "高风险拦截" },
+      { topic: "降息周期类判断", source: "账号观点", status: "已驳回", risk: "金融合规", lastUsed: "11 天前", effect: "高风险拦截" },
+      { topic: "AI 智能风控案例", source: "每日热点", status: "已确认", risk: "—", lastUsed: "5 天前", effect: "保留机制" },
+      { topic: "数字货币桥项目", source: "每日热点", status: "待审核", risk: "中风险", lastUsed: "8 天前", effect: "相似主题提示" },
+      { topic: "财政部长国会表态", source: "每日热点", status: "已确认", risk: "—", lastUsed: "7 天前", effect: "保留机制" },
+      { topic: "AI 资本支出与债务", source: "每日热点", status: "已确认", risk: "—", lastUsed: "今天", effect: "降低新颖度" },
+      { topic: "保险科技公司 IPO", source: "每日热点", status: "待审核", risk: "—", lastUsed: "9 天前", effect: "相似主题提示" },
+      { topic: "纯资讯转发型推文", source: "账号观点", status: "已驳回", risk: "质量不足", lastUsed: "13 天前", effect: "降低优先级" },
+      { topic: "美联储会议前瞻", source: "每日热点", status: "已确认", risk: "—", lastUsed: "2 天前", effect: "保留机制" },
+      ...Array.from({ length: 11 }, () => ({ topic: "", source: "", status: "", risk: "", lastUsed: "", effect: "" }))
+    ];
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+    let currentPage = "dashboard";
+    let toastTimer;
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+    }
+
+    function statusChip(status) {
+      const map = { "已确认": "chip", "已驳回": "chip risk-high", "待审核": "chip" };
+      return `<span class="${map[status] || "chip"}">${escapeHTML(status)}</span>`;
+    }
+
+    function renderMemoryTable() {
+      const body = $("[data-memory-body]");
+      if (!body) return;
+      body.innerHTML = memoryTopics.map(row => {
+        const isEmpty = !row.topic;
+        return `<tr class="${isEmpty ? "memory-row-empty" : ""}">
+          <td class="title-cell">${isEmpty ? "&nbsp;" : `<strong>${escapeHTML(row.topic)}</strong><span>来源：${escapeHTML(row.source)}</span>`}</td>
+          <td>${isEmpty ? "&nbsp;" : statusChip(row.status)}</td>
+          <td>${isEmpty ? "&nbsp;" : escapeHTML(row.risk)}</td>
+          <td>${isEmpty ? "&nbsp;" : escapeHTML(row.lastUsed)}</td>
+          <td>${isEmpty ? "&nbsp;" : escapeHTML(row.effect)}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderTodayPriority(limit = 3) {
+      const list = $("#today-priority-list");
+      if (!list) return;
+      list.innerHTML = todayPriority.slice(0, limit).map(item => {
+        const isAccount = item.type === "account";
+        const draft = isAccount ? accountCandidateMap[item.key] : contentMap[item.topic];
+        if (!draft) return "";
+        const title = isAccount ? draft.title : item.topic;
+        const subtitle = isAccount ? `${draft.account} · ${item.category} · 高表现样例` : `${item.tags[2]} · ${item.time}`;
+        const firstSentence = (draft.en.match(/^.*?[.!?](?:\s|$)/) || [draft.en])[0].trim();
+        const chips = item.tags.map(tag => `<span class="chip ${tag.includes("高风险") ? "risk-high" : tag.includes("中风险") ? "risk-medium" : ""}">${escapeHTML(tag)}</span>`).join("");
+        const sourceChip = `<span class="chip ${isAccount ? "" : "strong"}">${isAccount ? "账号观点" : "每日热点"}</span>`;
+        const actions = isAccount
+          ? `<a class="btn small" href="${escapeHTML(draft.url)}" target="_blank" rel="noreferrer">查看来源</a><button class="btn primary small" data-action="generate-account" data-account-key="${item.key}">生成候选</button>`
+          : `<button class="btn small" data-action="evidence" data-topic="${escapeHTML(item.topic)}">查看证据</button><button class="btn primary small" data-action="generate" data-topic="${escapeHTML(item.topic)}">生成候选</button>`;
+        return `<article class="hotspot-row ${item.followup === false ? "is-deprioritized" : ""}" data-priority-type="${item.type}" data-priority-score="${item.score}"><div class="score">${item.score}</div><div class="hotspot-copy"><h3>${escapeHTML(title)}</h3><p>${escapeHTML(subtitle)}</p><p class="candidate-summary">摘要：${escapeHTML(draft.summary)}</p><p class="candidate-hook">Hook: ${escapeHTML(firstSentence)}</p><div class="chip-row">${chips}${sourceChip}</div></div><div class="row-actions">${actions}</div></article>`;
+      }).join("");
+    }
+
+    const hotspotExtraTopics = [
+      ["利好事件", "行业热点"], ["利好事件", "行业热点"], ["宏观数据", "行业热点"], ["利好事件", "行业热点"],
+      ["地缘政治", "突发利空"], ["宏观数据"], ["突发利空", "行业热点"], ["利好事件", "行业热点"]
+    ];
+
+    function enrichHotspotTopics() {
+      $$("#hotspot-table tbody tr").forEach((row, index) => {
+        const topics = hotspotExtraTopics[index] || [];
+        row.dataset.search = `${row.dataset.search} ${topics.join(" ")}`;
+        const cell = $(".title-cell", row);
+        if (cell && topics.length && !$(".extended-topics", cell)) cell.insertAdjacentHTML("beforeend", `<span class="extended-topics">扩展主题：${topics.join(" / ")}</span>`);
+      });
+    }
+
+    function filterHotspots() {
+      const term = $("#hotspot-search").value.trim().toLowerCase();
+      const topic = $("#topic-filter").value;
+      $$("#hotspot-table tbody tr").forEach(row => {
+        const haystack = `${row.dataset.search} ${row.textContent}`.toLowerCase();
+        row.hidden = (term && !haystack.includes(term)) || (topic !== "all" && !haystack.includes(topic.toLowerCase()));
+      });
+    }
+
+    function calendarTypeLabel(type) {
+      return ({ "us-macro": "美国宏观 / 美联储", "cn-macro": "中国宏观 / 央行", securities: "证券 / 保险 / 财报", derivatives: "期货 / 期权 / 衍生品" })[type] || "公开日程";
+    }
+
+    function renderCalendar() {
+      const key = calendarMonths[calendarMonthIndex];
+      const [year, month] = key.split("-").map(Number);
+      const events = calendarData[key];
+      const firstOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+      const totalDays = new Date(year, month, 0).getDate();
+      const cells = [];
+      for (let index = 0; index < firstOffset; index++) cells.push('<div class="calendar-day empty" aria-hidden="true"></div>');
+      for (let day = 1; day <= totalDays; day++) {
+        const dayEvents = events.map((item, index) => ({ item, index })).filter(entry => entry.item.day === day);
+        const isToday = fixedToday.getFullYear() === year && fixedToday.getMonth() + 1 === month && fixedToday.getDate() === day;
+        const eventHTML = dayEvents.map(({ item, index }) => `<button type="button" class="calendar-event ${item.type}" data-action="calendar-event" data-calendar-month="${key}" data-calendar-index="${index}" title="${escapeHTML(item.title)}">${escapeHTML(item.title)}</button>`).join("");
+        cells.push(`<div class="calendar-day ${dayEvents.length ? "has-event" : ""} ${isToday ? "is-today" : ""}" ${dayEvents.length ? `data-calendar-month="${key}" data-calendar-index="${dayEvents[0].index}"` : ""}><span class="calendar-day-number">${day}${isToday ? " · 今天" : ""}</span>${eventHTML}</div>`);
+      }
+      while (cells.length % 7) cells.push('<div class="calendar-day empty" aria-hidden="true"></div>');
+      $("#calendar-title").textContent = `${year}年${month}月 · 美国/中国核心数据`;
+      $("#calendar-grid").innerHTML = cells.join("");
+      $("[data-action='calendar-prev']").disabled = calendarMonthIndex === 0;
+      $("[data-action='calendar-next']").disabled = calendarMonthIndex === calendarMonths.length - 1;
+    }
+
+    function changeCalendar(delta) {
+      const nextIndex = Math.max(0, Math.min(calendarMonths.length - 1, calendarMonthIndex + delta));
+      if (nextIndex === calendarMonthIndex) { showToast("当前已是演示范围边界"); return; }
+      calendarMonthIndex = nextIndex;
+      renderCalendar();
+    }
+
+    function showCalendarEvent(monthKey, index) {
+      const item = calendarData[monthKey]?.[Number(index)];
+      if (!item) return;
+      const [year, month] = monthKey.split("-");
+      openModal("数据日历事件", `
+        <div class="form-grid">
+          <div class="chip-row"><span class="chip strong">${calendarTypeLabel(item.type)}</span><span class="chip">真实公开日程</span></div>
+          <div class="form-row"><label>事件标题</label><input class="field" value="${escapeHTML(item.title)}" readonly /></div>
+          <div class="form-row"><label>日期与北京时间</label><input class="field" value="${year}-${month}-${String(item.day).padStart(2, "0")} · ${escapeHTML(item.time)}" readonly /></div>
+          <div class="form-row"><label>简要说明</label><textarea readonly>${escapeHTML(item.note)}</textarea></div>
+          <div class="form-row"><label>公开来源</label><a class="btn" href="${item.url}" target="_blank" rel="noreferrer">打开来源链接 ↗</a></div>
+        </div>`);
+    }
+
+    function planTypeSelect(type, rowIndex, dayIndex) {
+      const options = planTypeOptions.map(option => `<option ${option === type ? "selected" : ""}>${option}</option>`).join("");
+      return `<select class="plan-type ${planTypeClass[type] || ""}" data-plan-type data-row="${rowIndex}" data-day="${dayIndex}" aria-label="稿件类型">${options}</select>`;
+    }
+
+    function renderWeekPlan() {
+      const html = weekPlanRows.map((row, rowIndex) => {
+        const days = row.days.map((day, dayIndex) => {
+          const source = day.source || (day.text ? "演示数据" : "");
+          const meta = `<div class="plan-cell-meta">${source ? `<span class="chip">${escapeHTML(source)}</span>` : ""}${day.confirmed ? '<span class="chip plan-confirmed">已确认</span>' : ""}${day.account ? `<button class="account-badge" data-action="account-cell-details" data-row="${rowIndex}" data-day="${dayIndex}" title="查看账号观点来源">${escapeHTML(day.account)}</button>` : ""}</div>`;
+          return `<td ${day.account ? `data-account-cell data-row="${rowIndex}" data-day="${dayIndex}"` : ""}><div class="plan-editor" contenteditable="true" role="textbox" data-plan-editor data-row="${rowIndex}" data-day="${dayIndex}" data-placeholder="输入内容主题">${escapeHTML(day.text)}</div>${planTypeSelect(day.type, rowIndex, dayIndex)}${meta}</td>`;
+        }).join("");
+        const deleteButton = `<button class="btn small danger" data-action="delete-plan-row" data-row="${rowIndex}">删除</button>`;
+        return `<tr class="${row.id === "row-account" ? "account-viewpoint-row" : ""}" data-plan-row="${rowIndex}"><td><div class="plan-project" contenteditable="true" data-plan-project data-row="${rowIndex}">${escapeHTML(row.project)}</div></td>${days}<td>${deleteButton}</td></tr>`;
+      }).join("");
+      $$(".week-plan-body").forEach(body => body.innerHTML = html);
+    }
+
+    function addPlanRow() {
+      const number = weekPlanRows.length + 1;
+      weekPlanRows.push({ id: `row-${Date.now()}`, project: `项目 ${number}`, days: Array.from({ length: 7 }, () => ({ text: "", type: "行业热点", source: "" })) });
+      renderWeekPlan();
+      showToast(`已新增项目 ${number}`);
+    }
+
+    function deletePlanRow(index) {
+      if (weekPlanRows.length === 1) { showToast("至少保留 1 个项目"); return; }
+      weekPlanRows.splice(Number(index), 1);
+      renderWeekPlan();
+      showToast("计划行已删除");
+    }
+
+    function showTodayPlan() {
+      const dayIndex = 3;
+      const items = weekPlanRows.map(row => ({ project: row.project, ...row.days[dayIndex] })).filter(item => item.text.trim());
+      const list = items.length ? items.map((item, index) => `<article class="evidence-item"><span class="chip">${index + 1}</span><strong>${escapeHTML(item.project)} · ${escapeHTML(item.text)}</strong><span class="muted">${escapeHTML(item.type)} · ${escapeHTML(item.source || "演示数据")}${item.confirmed ? " · 已确认" : ""}</span></article>`).join("") : '<div class="empty-state"><strong>今日暂无安排</strong><span>可回到 7 天计划表编辑周四单元格。</span></div>';
+      openModal("今日发布计划｜2026-08-20", `<div class="mode-banner"><div><strong>周四 · 8 月 20 日</strong><div class="muted">只展示当前页面内已安排的非空内容，按项目顺序排列。</div></div><span class="chip strong">${items.length} 条</span></div><div class="evidence-list">${list}</div>`);
+    }
+
+    function initCalendarDrag() {
+      const area = $("#calendar-drag-area");
+      let startX = 0;
+      let deltaX = 0;
+      let dragging = false;
+      area.addEventListener("pointerdown", event => {
+        if (event.target.closest("button, a, input, select, textarea")) return;
+        startX = event.clientX; deltaX = 0; dragging = true; area.classList.add("dragging"); area.setPointerCapture(event.pointerId);
+      });
+      area.addEventListener("pointermove", event => { if (dragging) deltaX = event.clientX - startX; });
+      area.addEventListener("pointerup", event => {
+        if (!dragging) return;
+        dragging = false; area.classList.remove("dragging"); area.releasePointerCapture(event.pointerId);
+        if (Math.abs(deltaX) > 60) changeCalendar(deltaX < 0 ? 1 : -1);
+      });
+      area.addEventListener("pointercancel", () => { dragging = false; area.classList.remove("dragging"); });
+    }
+
+    function initPlanDrag() {
+      $$(".week-plan-wrap").forEach(area => {
+        if (area.dataset.dragReady) return;
+        area.dataset.dragReady = "true";
+        let state = null;
+        area.addEventListener("pointerdown", event => {
+          if (event.target.closest("button, select, input, textarea, [contenteditable='true']")) return;
+          state = { x: event.clientX, y: event.clientY, left: area.scrollLeft, top: area.scrollTop };
+          area.classList.add("dragging"); area.setPointerCapture(event.pointerId);
+        });
+        area.addEventListener("pointermove", event => {
+          if (!state) return;
+          area.scrollLeft = state.left - (event.clientX - state.x);
+          area.scrollTop = state.top - (event.clientY - state.y);
+        });
+        area.addEventListener("pointerup", event => { if (!state) return; state = null; area.classList.remove("dragging"); area.releasePointerCapture(event.pointerId); });
+        area.addEventListener("pointercancel", () => { state = null; area.classList.remove("dragging"); });
+      });
+    }
+
+    function showAccountCellDetails(rowIndex, dayIndex) {
+      const cell = weekPlanRows[Number(rowIndex)]?.days[Number(dayIndex)];
+      if (!cell?.account) return;
+      openModal("账号观点来源", `<div class="form-grid"><div class="chip-row"><span class="account-badge">${escapeHTML(cell.account)}</span><span class="chip strong">账号观点</span><span class="chip">相似度 ${escapeHTML(cell.similarity)}</span></div><div class="form-row"><label>当前计划内容</label><textarea>${escapeHTML(cell.text)}</textarea></div><div class="form-row"><label>差异化改写建议</label><textarea readonly>${escapeHTML(cell.suggestion)}</textarea></div><div class="source-link-line"><strong>原始推文：</strong><a href="${cell.url}" target="_blank" rel="noreferrer">${cell.url}</a></div></div>`, `<button class="btn" data-action="close-modal">关闭</button><button class="btn primary" data-action="generate-account" data-account-key="${cell.accountKey}">生成候选</button>`);
+    }
+
+    function generateAccountCandidate(key) {
+      const draft = accountCandidateMap[key];
+      if (!draft) return;
+      openModal("生成账号观点候选", `<div class="mode-banner"><div><strong>机制借鉴，不照搬表达</strong><div class="muted">提交前检查事实、原帖链接与相似度。</div></div><span class="chip strong">人工审核</span></div><div class="form-grid">
+        <div class="form-row"><label>标题</label><input class="field" id="account-candidate-title" value="${escapeHTML(draft.title)}" /></div>
+        <div class="form-row"><label>事件摘要</label><textarea>${escapeHTML(draft.summary)}</textarea></div>
+        <div class="form-row"><label>内容角度</label><textarea>${escapeHTML(draft.angle)}</textarea></div>
+        <div class="form-row"><label>英文候选</label><textarea>${escapeHTML(draft.en)}</textarea></div>
+        <div class="form-row"><label>中文候选</label><textarea>${escapeHTML(draft.zh)}</textarea></div>
+        <div class="source-link-line"><strong>对比来源：</strong>${escapeHTML(draft.account)} · <a href="${draft.url}" target="_blank" rel="noreferrer">打开原推文 ↗</a></div>
+        <div class="chip-row"><span class="chip">${escapeHTML(draft.sourceType)}</span><span class="chip">查重完成</span><span class="chip strong">相似度 ${escapeHTML(draft.similarity)}</span><span class="chip">低风险</span></div>
+      </div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="submit-account-candidate" data-account-key="${key}">提交人工审核</button>`);
+    }
+
+    function submitAccountCandidate(key) {
+      const draft = accountCandidateMap[key];
+      if (!draft) return;
+      const title = $("#account-candidate-title")?.value.trim() || draft.title;
+      const id = `cand_account_${++candidateSequence}`;
+      const card = document.createElement("article");
+      card.className = "review-card";
+      card.dataset.status = "pending"; card.dataset.risk = "low"; card.dataset.candidateId = id; card.dataset.topic = title; card.dataset.accountKey = key;
+      card.innerHTML = `<div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title"></h3><div class="review-meta"><span class="chip">账号观点</span><span class="chip">${escapeHTML(draft.sourceType)}</span><span class="chip">查重完成</span><span class="chip">低风险</span></div></div><div class="review-actions"><a class="btn small" href="${draft.url}" target="_blank" rel="noreferrer">对比来源</a><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm">确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div><div class="review-evidence"><span>${escapeHTML(draft.account)} · 相似度 ${escapeHTML(draft.similarity)} · 等待人工确认</span><span class="mono">${id}</span></div>`;
+      $(".review-title", card).textContent = title;
+      $("#review-list").prepend(card);
+      closeModal(); updateReviewCounts(); switchPage("reviews"); showToast("账号观点候选已进入人工审核清单");
+    }
+
+    function ensureCandidateMetadata() {
+      $$("#review-list .review-card").forEach((card, index) => {
+        if (!card.dataset.candidateId) card.dataset.candidateId = `cand_${String(index + 1).padStart(3, "0")}`;
+        if (!card.dataset.topic) card.dataset.topic = $("[data-topic]", card)?.dataset.topic || $(".review-title", card)?.textContent.trim() || "候选内容";
+      });
+    }
+
+    function markConfirmed(card) {
+      if (!card.dataset.candidateId) card.dataset.candidateId = `cand_${++candidateSequence}`;
+      if (!card.dataset.topic) card.dataset.topic = $("[data-topic]", card)?.dataset.topic || $(".review-title", card)?.textContent.trim();
+      card.dataset.status = "confirmed";
+      const meta = $(".review-meta", card);
+      if (meta && !$(".confirmed-chip", meta)) meta.insertAdjacentHTML("beforeend", '<span class="chip strong confirmed-chip">已确认</span>');
+      const actions = $(".review-actions", card);
+      const confirmButton = $("[data-action='confirm']", actions); if (confirmButton) { confirmButton.disabled = true; confirmButton.textContent = "已确认"; }
+      if (actions && !$("[data-action='schedule']", actions)) actions.insertAdjacentHTML("beforeend", '<button class="btn primary small" data-action="schedule">拟发布日期</button>');
+      updateReviewCounts(); showToast("候选已人工确认，可设置拟发布日期");
+    }
+
+    function tweetForCard(card, variant = 0) {
+      const topic = card.dataset.topic || $(".review-title", card)?.textContent.trim();
+      const accountDraft = accountCandidateMap[card.dataset.accountKey];
+      const base = accountDraft?.en || contentMap[topic]?.en || `${topic}\n\nEvidence first, product mechanism second, and uncertainty always visible. #Fintech #AIAgents`;
+      const alternatives = [base, base.replace("The boundary", "Watch how the boundary").replace("A ", "One "), base.replace("not just", "far beyond").replace("shows", "signals")];
+      return alternatives[variant % alternatives.length].slice(0, 280);
+    }
+
+    function setTweetPreview(text) {
+      const preview = $("#schedule-tweet-text");
+      if (preview) preview.textContent = text;
+      const count = $("#schedule-char-count");
+      if (count) count.textContent = `${text.length} / 280 字符`;
+      if (pendingSchedule) pendingSchedule.tweet = text;
+    }
+
+    function openScheduleModal(card) {
+      ensureCandidateMetadata();
+      const title = $(".review-title", card).textContent.trim();
+      pendingSchedule = { card, variant: 0, tweet: tweetForCard(card, 0) };
+      openModal("设置拟发布日期", `<div class="form-grid">
+        <div class="form-row"><label>候选标题</label><input class="field" value="${escapeHTML(title)}" readonly /></div>
+        <div class="form-row"><label for="schedule-date">日期选择</label><input class="field" id="schedule-date" type="date" value="${card.dataset.scheduledDate || "2026-08-20"}" min="2026-08-20" max="2026-09-03" /></div>
+        <div class="form-row"><label>时段 / 项目</label><div class="schedule-options"><label class="schedule-option"><input type="radio" name="schedule-slot" value="午间短评" checked />午间短评</label><label class="schedule-option"><input type="radio" name="schedule-slot" value="晚间深度" />晚间深度</label><label class="schedule-option"><input type="radio" name="schedule-slot" value="账号观点" />账号观点</label><label class="schedule-option"><input type="radio" name="schedule-slot" value="其他" />其他</label></div></div>
+        <div class="form-row"><label for="schedule-custom">其他项目名称</label><input class="field" id="schedule-custom" placeholder="仅选择“其他”时使用" /></div>
+        <div class="form-row"><label>模拟推文预览</label><div class="tweet-preview"><p id="schedule-tweet-text">${escapeHTML(pendingSchedule.tweet)}</p><footer><span id="schedule-char-count">${pendingSchedule.tweet.length} / 280 字符</span><span class="chip-row"><button class="btn small" data-action="copy-tweet">复制推文</button><button class="btn small" data-action="regenerate-tweet">重新生成</button></span></footer></div></div>
+        <small class="muted">这里只生成排期与模拟推文，不会自动发布到 X。</small>
+      </div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="confirm-schedule">确认排期</button>`);
+    }
+
+    function confirmScheduleFromModal() {
+      if (!pendingSchedule?.card) return;
+      const date = $("#schedule-date").value;
+      const slotValue = $("[name='schedule-slot']:checked").value;
+      const custom = $("#schedule-custom").value.trim();
+      const slot = slotValue === "其他" ? (custom || "其他") : slotValue;
+      let rowIndex = weekPlanRows.findIndex(row => row.project === slot);
+      if (rowIndex < 0) {
+        weekPlanRows.push({ id: `row-${Date.now()}`, project: slot, days: Array.from({ length: 7 }, () => ({ text: "", type: "行业热点", source: "" })) });
+        rowIndex = weekPlanRows.length - 1;
+      }
+      const dayIndex = (new Date(`${date}T12:00:00`).getDay() + 6) % 7;
+      pendingSchedule.date = date; pendingSchedule.slot = slot; pendingSchedule.rowIndex = rowIndex; pendingSchedule.dayIndex = dayIndex;
+      const occupied = weekPlanRows[rowIndex].days[dayIndex]?.text.trim();
+      if (occupied) {
+        openModal("该时段已有内容", `<p>“${escapeHTML(slot)}”在所选星期已有：</p><div class="rule-note"><strong>${escapeHTML(occupied)}</strong></div><p class="muted">请选择覆盖、追加到新行或取消。</p>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn" data-action="schedule-append">追加到新行</button><button class="btn primary" data-action="schedule-overwrite">覆盖</button>`);
+        return;
+      }
+      applySchedule("overwrite");
+    }
+
+    function applySchedule(mode) {
+      if (!pendingSchedule?.card) return;
+      let { rowIndex, dayIndex, date, slot, card, tweet } = pendingSchedule;
+      if (mode === "append") {
+        const days = Array.from({ length: 7 }, () => ({ text: "", type: "行业热点", source: "" }));
+        weekPlanRows.push({ id: `row-${Date.now()}`, project: `${slot} · 追加`, days });
+        rowIndex = weekPlanRows.length - 1;
+      }
+      const title = $(".review-title", card).textContent.trim();
+      const source = $(".review-meta .chip", card)?.textContent.trim() || "候选内容";
+      weekPlanRows[rowIndex].days[dayIndex] = { text: title, type: card.dataset.accountKey ? "行业热点" : "支付", source, confirmed: true };
+      renderWeekPlan();
+      const id = card.dataset.candidateId;
+      confirmedSchedules[id] = { title, scheduledDate: date, slot, source, tweet };
+      card.dataset.scheduledDate = date; card.dataset.scheduledSlot = slot; card.dataset.tweet = tweet;
+      const meta = $(".review-meta", card);
+      if (meta && !$(".scheduled-chip", meta)) meta.insertAdjacentHTML("beforeend", '<span class="chip plan-confirmed scheduled-chip">已排期</span>');
+      const actions = $(".review-actions", card);
+      const scheduleButton = $("[data-action='schedule']", actions); if (scheduleButton) scheduleButton.textContent = "修改日期";
+      if (!$("[data-action='view-plan']", actions)) actions.insertAdjacentHTML("beforeend", '<button class="btn small" data-action="view-plan">查看计划</button><button class="btn small" data-action="export-tweet">导出推文</button>');
+      let info = $(".schedule-info", card);
+      if (!info) { info = document.createElement("div"); info.className = "schedule-info"; card.appendChild(info); }
+      info.textContent = `拟发布 ${date} · ${slot} · 仅排期，仍需人工发布`;
+      closeModal(); pendingSchedule = null; showToast(`已排期至 ${date.slice(5).replace("-", "月")}日 · ${slot}`);
+    }
+
+    function copyTweetText() {
+      const text = $("#schedule-tweet-text")?.textContent || pendingSchedule?.tweet || "";
+      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => {});
+      showToast("模拟推文已复制");
+    }
+
+    function exportTweet(card) {
+      const text = card.dataset.tweet || tweetForCard(card);
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "模拟推文.txt"; link.click(); URL.revokeObjectURL(url); showToast("模拟推文已导出");
+    }
+
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function openModal(title, html, footerHtml = '<button class="btn" data-action="close-modal">关闭</button>') {
+      $("#modal-title").textContent = title;
+      $("#modal-body").innerHTML = html;
+      $("#modal-footer").innerHTML = footerHtml;
+      $("#modal-backdrop").classList.add("open");
+      document.body.style.overflow = "hidden";
+      setTimeout(() => $("#modal-backdrop .btn, #modal-backdrop .icon-btn")?.focus(), 0);
+    }
+
+    function closeModal() {
+      $("#modal-backdrop").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function switchPage(page) {
+      if (!pageMeta[page]) return;
+      currentPage = page;
+      $$(".page").forEach(el => el.classList.toggle("active", el.dataset.page === page));
+      $$("[data-page-target]").forEach(el => el.classList.toggle("active", el.dataset.pageTarget === page));
+      $("#page-title").textContent = pageMeta[page][0];
+      $("#page-subtitle").textContent = pageMeta[page][1];
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateReviewCounts() {
+      const count = $$('#review-list .review-card[data-status="pending"]').length;
+      $$(".review-count").forEach(el => el.textContent = count);
+    }
+
+    function showEvidence(topic) {
+      const evidence = evidenceMap[topic] || [["演示数据", "待补充真实来源", ""]];
+      const items = evidence.map(([name, time, url], index) => `
+        <article class="evidence-item">
+          <span class="chip">来源 ${index + 1}</span>
+          <strong>${name}</strong>
+          <span class="muted">公开时间：${time}</span><br />
+          ${url ? `<a href="${url}" target="_blank" rel="noreferrer">${url}</a>` : '<span class="muted">此条为演示数据，不提供占位链接</span>'}
+        </article>`).join("");
+      openModal("证据包｜" + topic, `
+        <div class="mode-banner"><div><strong>来源可回溯</strong><div class="muted">真实热点链接来自 2026-08-20 数据快照；发布前仍需人工复核时效。</div></div><span class="chip strong">${evidence.length} 个来源</span></div>
+        <div class="evidence-list">${items}</div>
+        <div class="panel" style="margin-top:12px"><div class="panel-body"><strong>评分依据</strong><p class="muted">时效 92 / 相关性 95 / 可延展性 86 / 来源可信度 82 / 新颖度 88</p></div></div>`);
+    }
+
+    function generateCandidate(topic) {
+      const draft = contentMap[topic] || {
+        summary: `围绕“${topic}”整理公开事实，等待补齐至少 2 个来源后进入审核。`,
+        angle: "从产品机制、用户影响与风险边界三个层面解释事件。",
+        en: `What changed in ${topic}—and which product signal should operators watch next? Evidence first, opinion second. #Fintech #AIAgents`,
+        zh: `关于“${topic}”的候选内容：先核对事实和来源，再解释产品机制与风险边界。`
+      };
+      openModal("生成候选内容", `
+        <div class="mode-banner"><div><strong>候选内容基于真实事件生成</strong><div class="muted">发布前请人工复核原始链接、时间与风险表达。</div></div><span class="chip strong">人工审核</span></div>
+        <div class="form-grid">
+          <input type="hidden" id="candidate-title-input" value="${topic}" />
+          <div class="form-row"><label>事件摘要</label><textarea>${draft.summary}</textarea></div>
+          <div class="form-row"><label>内容角度</label><textarea>${draft.angle}</textarea></div>
+          <div class="form-row"><label>英文候选</label><textarea>${draft.en}</textarea></div>
+          <div class="form-row"><label>中文候选</label><textarea>${draft.zh}</textarea></div>
+          <div class="chip-row"><span class="chip">证据完整</span><span class="chip">查重完成</span><span class="chip">相似度 0.32</span><span class="chip">低风险</span></div>
+        </div>`, `
+        <button class="btn" data-action="close-modal">取消</button>
+        <button class="btn primary" data-action="submit-candidate" data-topic="${topic}">提交人工审核</button>`);
+    }
+
+    function submitCandidate(topic) {
+      const input = $("#candidate-title-input");
+      const title = input?.value.trim() || `关于${topic}的候选内容`;
+      const card = document.createElement("article");
+      card.className = "review-card";
+      card.dataset.status = "pending";
+      card.dataset.risk = "low";
+      const id = `cand_daily_${++candidateSequence}`;
+      card.dataset.candidateId = id; card.dataset.topic = topic;
+      card.innerHTML = `<div class="review-main"><input class="check" type="checkbox" aria-label="选择候选" /><div><h3 class="review-title"></h3><div class="review-meta"><span class="chip">每日热点</span><span class="chip">真实数据</span><span class="chip">查重完成</span><span class="chip">低风险</span></div></div><div class="review-actions"><button class="btn small" data-action="evidence" data-topic="${topic}">查看依据</button><button class="btn small" data-action="modify">修改</button><button class="btn primary small" data-action="confirm">确认</button><button class="btn small danger" data-action="reject">驳回</button></div></div><div class="review-evidence"><span>候选刚刚生成 · 等待人工确认</span><span class="mono">${id}</span></div>`;
+      $(".review-title", card).textContent = title;
+      $("#review-list").prepend(card);
+      closeModal(); updateReviewCounts(); showToast("候选已进入审核清单"); switchPage("reviews");
+    }
+
+    function refreshData(button) {
+      if (button.classList.contains("loading")) return;
+      button.classList.add("loading"); button.disabled = true;
+      $("#task-status").textContent = "正在更新";
+      setTimeout(() => {
+        button.classList.remove("loading"); button.disabled = false;
+        $("#task-status").textContent = "真实数据已更新";
+        $("#page-subtitle").textContent = "刚刚更新 · 真实数据 + 演示数据";
+        showToast("真实数据更新完成：8 条热点、5 个账号、93 条推文快照");
+      }, 1200);
+    }
+
+    function modifyReview(card) {
+      const title = $(".review-title", card).textContent;
+      openModal("修改候选", `<div class="form-grid"><div class="form-row"><label for="edit-title">标题 / Hook</label><input class="field" id="edit-title" value="${title.replaceAll('"', '&quot;')}" /></div><div class="form-row"><label for="edit-structure">内容结构</label><textarea id="edit-structure">事实来源 → 产品机制 → 风险边界 → 行动建议</textarea></div><div class="mode-banner"><div><strong>修改后将重新检查</strong><div class="muted">证据完整度、近 30 天查重、同质化和金融风险规则。</div></div></div></div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="save-modification">保存并重新检查</button>`);
+      $("[data-action='save-modification']").addEventListener("click", () => {
+        $(".review-title", card).textContent = $("#edit-title").value.trim() || title;
+        if (card.dataset.risk === "high") {
+          card.dataset.risk = "medium";
+          const highChip = $(".risk-high", card);
+          if (highChip) { highChip.className = "chip risk-medium"; highChip.textContent = "中风险 · 待复核"; }
+          const confirm = $("[data-action='confirm']", card); if (confirm) confirm.disabled = false;
+        }
+        closeModal(); showToast("修改已保存，风险规则重新检查完成");
+      }, { once: true });
+    }
+
+    function rejectReview(card) {
+      openModal("驳回候选", `<div class="form-grid"><div class="form-row"><label for="reject-reason">驳回原因</label><select class="select" id="reject-reason"><option>不相关</option><option>已过时</option><option>重复选题</option><option>同质化</option><option>事实风险</option><option>合规风险</option><option>质量不足</option><option>其他</option></select></div><div class="form-row"><label for="reject-note">审核说明</label><textarea id="reject-note" placeholder="说明原因，供近 30 天内容记忆参考"></textarea></div></div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="confirm-reject">确认驳回</button>`);
+      $("[data-action='confirm-reject']").addEventListener("click", () => {
+        card.dataset.status = "rejected";
+        closeModal(); updateReviewCounts(); showToast("候选已驳回，原因已写入内容记忆");
+      }, { once: true });
+    }
+
+    function exportConfirmed() {
+      const confirmed = $$('#review-list .review-card[data-status="confirmed"] .review-title').map(el => `- ${el.textContent}`).join("\n");
+      if (!confirmed) { showToast("暂无已确认内容可导出"); return; }
+      const content = `# 今日内容运营清单\n\n${confirmed}\n\n> AI 辅助生成，需人工发布；引用前请再次核对公开来源。\n`;
+      const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a"); link.href = url; link.download = "今日内容运营清单.md"; link.click();
+      URL.revokeObjectURL(url); showToast("已导出 Markdown 清单");
+    }
+
+    function addAccount() {
+      openModal("添加对标账号", `<div class="form-grid"><div class="form-row"><label for="account-name">账号名称</label><input class="field" id="account-name" placeholder="例如：金融产品研究室" /></div><div class="form-row"><label for="account-url">公开主页或内容 URL</label><input class="field" id="account-url" placeholder="https://" /></div><div class="form-row"><label for="account-note">标签</label><input class="field" id="account-note" placeholder="支付、AI、合规" /></div><small class="muted">只录入公开内容；不登录、不访问私域、不绕过平台限制。</small></div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="save-account">保存账号</button>`);
+      $("[data-action='save-account']").addEventListener("click", () => {
+        const name = $("#account-name").value.trim();
+        if (!name) { showToast("请填写账号名称"); return; }
+        const card = document.createElement("article"); card.className = "account-card";
+        card.innerHTML = `<div class="account-top"><span class="avatar">新</span><div><h3></h3><span class="chip">等待导入内容</span></div></div><p>刚刚添加 · 仅公开内容</p>`;
+        $("h3", card).textContent = name; $("#account-strip").append(card);
+        closeModal(); showToast("对标账号已添加");
+      }, { once: true });
+    }
+
+    document.addEventListener("click", (event) => {
+      const calendarEvent = event.target.closest("[data-action='calendar-event']");
+      if (calendarEvent) { showCalendarEvent(calendarEvent.dataset.calendarMonth, calendarEvent.dataset.calendarIndex); return; }
+      const calendarDay = event.target.closest(".calendar-day.has-event");
+      if (calendarDay) { showCalendarEvent(calendarDay.dataset.calendarMonth, calendarDay.dataset.calendarIndex); return; }
+      const target = event.target.closest("button, [data-page-target]");
+      if (!target) return;
+      if (target.dataset.pageTarget) { switchPage(target.dataset.pageTarget); return; }
+      const action = target.dataset.action;
+      const card = target.closest(".review-card");
+      if (action === "close-modal") closeModal();
+      if (action === "refresh") refreshData(target);
+      if (action === "evidence") showEvidence(target.dataset.topic || "候选内容");
+      if (action === "generate") generateCandidate(target.dataset.topic || "今日热点");
+      if (action === "submit-candidate") submitCandidate(target.dataset.topic);
+      if (action === "modify" && card) modifyReview(card);
+      if (action === "reject" && card) rejectReview(card);
+      if (action === "confirm" && card && !target.disabled) markConfirmed(card);
+      if (action === "export") exportConfirmed();
+      if (action === "add-account") addAccount();
+      if (action === "calendar-prev") changeCalendar(-1);
+      if (action === "calendar-next") changeCalendar(1);
+      if (action === "today-plan") showTodayPlan();
+      if (action === "add-plan-row") addPlanRow();
+      if (action === "delete-plan-row") deletePlanRow(target.dataset.row);
+      if (action === "account-cell-details") showAccountCellDetails(target.dataset.row, target.dataset.day);
+      if (action === "generate-account") generateAccountCandidate(target.dataset.accountKey);
+      if (action === "submit-account-candidate") submitAccountCandidate(target.dataset.accountKey);
+      if (action === "schedule" && card) openScheduleModal(card);
+      if (action === "confirm-schedule") confirmScheduleFromModal();
+      if (action === "schedule-overwrite") applySchedule("overwrite");
+      if (action === "schedule-append") applySchedule("append");
+      if (action === "copy-tweet") copyTweetText();
+      if (action === "regenerate-tweet" && pendingSchedule?.card) { pendingSchedule.variant += 1; setTweetPreview(tweetForCard(pendingSchedule.card, pendingSchedule.variant)); showToast("已生成另一种表达"); }
+      if (action === "view-plan") { switchPage("dashboard"); setTimeout(() => $("[data-dashboard-plan]")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0); }
+      if (action === "export-tweet" && card) exportTweet(card);
+      if (action === "rewrite-similarity") openModal("人工改写", `<div class="form-grid"><div class="form-row"><label>命中原因</label><textarea readonly>数字开场、多项对比与提问句式均与对比来源高度接近。</textarea></div><div class="form-row"><label>改写方向</label><textarea>保留公开事实，改用“产品机制 → 风险边界 → 验收清单”结构；删除原帖特征句式并重新查重。</textarea></div></div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="close-modal">保存改写草稿</button>`);
+      if (action === "analyze-accounts") { target.classList.add("loading"); target.disabled = true; setTimeout(() => { target.classList.remove("loading"); target.disabled = false; showToast("5 个账号、93 条真实推文重新分析完成"); }, 1100); }
+      if (action === "switch-mode") { target.textContent = target.textContent.includes("演示") ? "切换为混合数据" : "切换为演示数据"; showToast("数据模式已切换，所有结果均标注来源类型"); }
+      if (action === "save-settings") showToast("设置已保存");
+      if (action === "run-all") { target.classList.add("loading"); target.disabled = true; setTimeout(() => { target.classList.remove("loading"); target.disabled = false; showToast("全部任务运行完成"); }, 1300); }
+      if (action === "import") openModal("导入公开内容", `<div class="form-grid"><div class="form-row"><label>粘贴公开 URL</label><textarea placeholder="每行一个 URL"></textarea></div><div class="form-row"><label>或上传 CSV</label><input class="field" type="file" accept=".csv" /></div><small class="muted">原型仅演示交互，不会真正上传文件。</small></div>`, `<button class="btn" data-action="close-modal">取消</button><button class="btn primary" data-action="mock-import">开始导入</button>`);
+      if (action === "mock-import") { closeModal(); showToast("演示导入完成：识别 6 条公开内容"); }
+      if (action === "help") openModal("原型说明", `<p>Content Radar V0.9.3 将任务调度、内容记忆与策略迭代合并为一个可解释的优化工作台。</p><ul><li>左栏策略迭代展示 AI 怎么根据真实互动与人工反馈调整推荐。</li><li>规则引擎与数据回收配置改为上下结构，避免窄栏中的 API 配置溢出。</li><li>右栏近 30 天内容记忆展示 AI 学了什么，并可独立滚动查看 36 条记录。</li><li>审核清单的确认、驳回与修改在生产方案中写入 reviewActionLog，每 24h 汇总至策略调整器。</li><li>当前为静态 Demo，只演示闭环机制，不宣称已经自动连接 X API 或实际执行策略更新。</li><li>左侧“高保真预览”可对比企业后台与时尚风格两个首页方向。</li></ul><div class="rule-note"><strong>面试演示：</strong>“任务记忆与优化”是产品的大脑——左栏说明 AI 怎么想，右栏说明 AI 学了什么，两者共同形成反馈环路。</div>`);
+      if (action === "batch-reject") {
+        const selected = $$('#review-list .review-card .check:checked').map(input => input.closest('.review-card'));
+        if (!selected.length) { showToast("请先选择候选"); return; }
+        selected.forEach(item => item.dataset.status = 'rejected'); updateReviewCounts(); showToast(`已驳回 ${selected.length} 条候选`);
+      }
+    });
+
+    document.addEventListener("input", event => {
+      if (event.target.matches("[data-plan-editor]")) {
+        const row = Number(event.target.dataset.row); const day = Number(event.target.dataset.day); const text = event.target.textContent.trim();
+        weekPlanRows[row].days[day].text = text; if (text && !weekPlanRows[row].days[day].source) weekPlanRows[row].days[day].source = "演示数据";
+        $$(`[data-plan-editor][data-row="${row}"][data-day="${day}"]`).forEach(editor => { if (editor !== event.target) editor.textContent = text; });
+      }
+      if (event.target.matches("[data-plan-project]")) {
+        const row = Number(event.target.dataset.row); const text = event.target.textContent.trim() || `项目 ${row + 1}`; weekPlanRows[row].project = text;
+        $$(`[data-plan-project][data-row="${row}"]`).forEach(editor => { if (editor !== event.target) editor.textContent = text; });
+      }
+    });
+    document.addEventListener("change", event => {
+      if (!event.target.matches("[data-plan-type]")) return;
+      const row = Number(event.target.dataset.row); const day = Number(event.target.dataset.day);
+      weekPlanRows[row].days[day].type = event.target.value;
+      $$(`[data-plan-type][data-row="${row}"][data-day="${day}"]`).forEach(select => { select.value = event.target.value; select.className = `plan-type ${planTypeClass[event.target.value] || ""}`; });
+    });
+
+    $("#modal-backdrop").addEventListener("click", event => { if (event.target === event.currentTarget) closeModal(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeModal(); });
+    $("#hotspot-search").addEventListener("input", filterHotspots);
+    $("#topic-filter").addEventListener("change", filterHotspots);
+    $$("[data-review-filter]").forEach(tab => tab.addEventListener("click", () => {
+      $$("[data-review-filter]").forEach(item => item.classList.toggle("active", item === tab));
+      const filter = tab.dataset.reviewFilter;
+      $$("#review-list .review-card").forEach(card => card.hidden = filter !== "all" && card.dataset.status !== filter);
+    }));
+    enrichHotspotTopics();
+    ensureCandidateMetadata();
+    renderMemoryTable();
+    renderTodayPriority();
+    renderCalendar();
+    renderWeekPlan();
+    initCalendarDrag();
+    initPlanDrag();
+    updateReviewCounts();
+  </script>
+</body>
+</html>
